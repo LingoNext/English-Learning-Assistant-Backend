@@ -10,7 +10,7 @@
 | `/auth/password/reset/confirm/` | 密碼重設 | POST | email, verification_code, new_password | PasswordResetComplete | 200, 400, 401 | 需先呼叫 `/auth/verification/send/` 取得驗證碼 |
 | `/auth/user/` | 取得用戶資料 | GET | - | UserProfile | 200, 401 | - |
 | `/auth/user/` | 更新用戶資料 | PUT/PATCH | name | UserProfile | 200, 400, 401 | - |
-| `/stories` | 創建故事，返回 ai 回應 | POST | content, creationMode, emotionData | AnalysisResult | 201, 400, 401 | - |
+| `/stories` | 創建故事，返回 ai 回應 | POST | content, creationMode, emotionData, audioFile(僅限voice) | LearningRecord | 201, 400, 401 | 若 creationMode=voice，audioFile 必填，否則回傳 400。API 必須使用 multipart/form-data |
 | `/stories` | 取得故事清單 | GET | - | StoryContent | 200, 401 | - |
 | `/ai/conversation/{storyId}/messages` | AI 對話（訊息） | POST | message, context | ConversationResponse | 200, 400, 401, 404 | - |
 | `/ai/conversation/{storyId}/next-question` | AI 提供下一題引導 | POST | - | NextQuestionResponse | 200, 404, 401 | - |
@@ -72,16 +72,8 @@
 | content | varchar(500) / text | 1-500 characters (API: string, DB: varchar(500) or text) | 故事內容 |
 | creationMode | enum('text','voice','image') / varchar(10) | enum: "text", "voice", "image" | 創作模式（建議 DB 使用 enum 或 varchar(10)） |
 | emotionScore | smallint | 1-5 (API: integer, DB: smallint/tinyint) | 情緒分數 |
+| audioFile | varchar(255) / string | 音訊檔案路徑 (API: string, DB: varchar(255)) | 語音故事的音訊檔案路徑（若 creationMode 為 voice） |
 | createdAt | timestamptz / string | ISO 8601 datetime (API: string, DB: timestamptz) | 創作時間 |
-
-- AnalysisResult
-
-| 欄位名稱 | 型別 | 格式 | 說明 |
-|---------|------|------|-----|
-| id | uuid | UUID (API: string, DB: uuid) | 故事唯一識別碼 |
-| emotion | smallint | 1-5 (API: integer, DB: smallint/tinyint) | 情緒分數 |
-| feedback | text | text (API: string, DB: text) | AI 回饋內容 |
-| suggestions | text[] / jsonb | Array<string> (API: array) | 改善建議（DB: text[] 或 jsonb） |
 
 - LearningRecord
 
@@ -175,7 +167,7 @@
 ## API 詳細定義與 Request/Response 範例
 
 ### 使用上的共通 Header
-- Content-Type: application/json
+- Content-Type: application/json (除了語音使用的是 multipart/form-data)
 - Authorization: Token <your-token> (需要認證的 API)
 
 ### 1) /auth/login/ — POST
@@ -291,30 +283,27 @@
 
 ### 7) /stories — POST（創建故事）
 - 描述：提交新的故事（文字/語音/圖片）
-- Request 範例:
-```json
-{
-	"content": "today i learned something new coding,and it was really exciting!",
-	"creationMode": "voice",
-	"emotionData": 5,
-}
-```
-- 成功 Response (201):
+- Content-Type: `multipart/form-data`
+- 當 `creationMode` 為 `voice` 時，`audioFile` 為必填欄位，否則回傳 400。
+- 其他模式（如 text, image）不需傳 audioFile。
+
+成功 Response (201):
 ```json
 {
 	"id": "story-uuid-1",
 	"content": "today i learned something new coding,and it was really exciting!",
 	"creationMode": "voice",
 	"emotionData": 5,
-    "analysis": {
-        "scores": {
-            "grammar": 2,
-            "vocabulary": 4,
-            "pronunciation": 3
-        },
-        "keywords": ["coding", "exciting"],
-        "suggestions": ["建議多練習基本句型結構，主詞與動詞搭配不夠清楚"],
-    },
+	"analysis": {
+		"scores": {
+			"grammar": 2,
+			"vocabulary": 4,
+			"pronunciation": 3
+		},
+		"keywords": ["coding", "exciting"],
+		"suggestions": ["建議多練習基本句型結構，主詞與動詞搭配不夠清楚"],
+	},
+	"audioFile": "story_voice.wav",
 	"createdAt": "2025-08-21T11:00:00Z"
 }
 ```
@@ -338,6 +327,7 @@
             "keywords": ["coding", "exciting"],
             "suggestions": ["建議多練習基本句型結構，主詞與動詞搭配不夠清楚"],
         },
+		"audioFile": "story_voice.wav",
 	    "createdAt": "2025-08-21T11:00:00Z"
     },
     {
