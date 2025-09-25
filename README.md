@@ -1,5 +1,5 @@
 ## RESTful API 標準規格
-> /auth/ 可行。/stories 和 /ai/conversation 暫定，待確認可行性。
+> /auth/ 可行。/ai/conversation 待確認可行性。
 
 ### 表格1：API 端點規格表
 
@@ -12,11 +12,6 @@
 | `/auth/delete_account/` | 刪除帳號 | POST | email, password | - | 204, 400, 401 | 需攜帶 token |
 | `/auth/user/` | 取得用戶資料 | GET | - | email, name | 200, 401 | 需攜帶 token |
 | `/auth/user/` | 更新用戶資料 | PUT | name | - | 200, 400, 401 | 需攜帶 token |
-| `/stories` | 創建故事，返回 ai 回應 | POST | context,emotionScore | grammarScore, vocabularyScore, pronunciationScore, keywords, feedback,suggestions | 201, 400, 401 | 需攜帶 token |
-| `/stories` | 取得故事清單 | GET | - | StoryContent | 200, 401 | 需攜帶 token |
-| `/ai/conversation/messages/first_question` | ai 第一個問題 | POST | storyId | question, ConversationId | 200, 400, 401, 404 | 需攜帶 token |
-| `/ai/conversation/next_question` | 回答並提供下一題 | POST | ConversationId, context | suggestions, question, ConversationId | 200, 404, 401 | 需攜帶 token |
-| `/ai/conversation/change_question` | 更換問題 | POST | ConversationId | question | 200, 400, 404, 401 | 需攜帶 token |
 
 ### 表格2：資料欄位規格表
 
@@ -51,41 +46,7 @@
 | user_id  | int        | 是       | 無     | 關聯使用者主鍵  |
 | created  | datetime   | 是       | now()  | 建立時間       |
 
-
-
-#### 故事/學習記錄
-
-- StoryContent (自建)
-
-| 欄位名稱           | 資料型別         | 是否必填 | 預設值   | 說明                         |
-|:-:|:-:|:-:|:-:|:-:|
-| id                 | uuid             | 是       | 無       | 唯一識別碼                   |
-| content            | varchar(500)/text| 否       | 無       | 故事內容                     |
-| creationMode       | enum/varchar(10) | 否       | "text"   | 創作模式（text/voice/image） |
-| emotionScore       | smallint         | 否       | 1        | 情緒分數                     |
-| audioFile          | varchar(255)     | 否       | 無       | 語音故事的音訊檔案路徑       |
-| grammarScore       | smallint         | 否       | 0        | 文法分數                     |
-| vocabularyScore    | smallint         | 否       | 0        | 詞彙分數                     |
-| pronunciationScore | smallint         | 否       | 0        | 發音分數                     |
-| feedback           | text             | 否       | 無       | AI 回饋內容                  |
-| suggestions        | text[]/jsonb     | 否       | 無       | 改善建議                     |
-| createdAt          | timestamptz      | 是       | now()    | 建立時間                     |
-
-
-
-#### AI 對話相關
-
-- Conversation
-
-| 欄位名稱        | 資料型別      | 是否必填 | 預設值 | 說明          |
-|:-:|:-:|:-:|:-:|:-:|
-| id             | uuid         | 是       | 無     | 唯一識別碼    |
-| StoryContentId | uuid         | 是       | 無     | 故事內容 ID   |
-| question       | text         | 是       | 無     | AI 問題內容   |
-| content        | text         | 否       | 無     | 使用者回答內容 |
-| suggestions    | text[]/jsonb | 否       | 無     | AI 建議回應   |
-| previousId     | uuid         | 否       | 無     | 前一個對話 ID |
-| createdAt      | timestamptz  | 是       | now()  | 回應時間      |
+#### AI 互動相關
 
 ## 備註
 
@@ -214,126 +175,4 @@
 }
 ```
 
-### 8) /stories — POST
-- 描述：提交新的故事（文字/語音/圖片）
-- Content-Type: `multipart/form-data`
-- 當 `creationMode` 為 `voice` 時，`audioFile` 為必填欄位，否則回傳 400。
-- 其他模式（如 text, image）不需傳 audioFile。
-- feedback: LLM 用 context 生成針對使用者故事的用語、文法、發音等方面的回饋
-- suggestions: LLM 用 context 生成分別為專業（formal / professional）和生活化（casual / friendly）的句子，並根據上下文提供下一題引導
-- Headers: Authorization: Token <your-token>
-- Request 範例:
-```json
-{
-	"storyId": "<story-id-1>",
-	"content": "today i learned something new coding,and it was really exciting!",
-	"creationMode": "voice",
-	"emotionData": 5,
-	"audioFile": "story_voice.wav"
-}
-```
-成功 Response (201):
-```json
-{
-	"scores": {
-		"grammar": 2,
-		"vocabulary": 4,
-		"pronunciation": 3
-	},
-	"keywords": ["coding", "exciting"],
-	"feedback": ["建議多練習基本句型結構，主詞與動詞搭配不夠清楚"],
-	"suggestions": ["Today, I acquired new coding knowledge, and it was a truly rewarding experience.",
-	"I picked up something new in coding today, and it was super exciting!"]
-}
-```
-
-### 9) /stories — GET
-- Headers: Authorization: Token <your-token>
-- 成功 Response (200):
-```json
-[
-    {
-	    "content": "today i learned something new coding,and it was really exciting!",
-	    "creationMode": "voice",
-	    "emotionData": 5,
-        "scores": {
-                "grammar": 2,
-                "vocabulary": 4,
-                "pronunciation": 3
-            },
-        "keywords": ["coding", "exciting"],
-        "feedback": ["建議多練習基本句型結構，主詞與動詞搭配不夠清楚"],
-		"suggestions": ["Today, I acquired new coding knowledge, and it was a truly rewarding experience.",
-		"I picked up something new in coding today, and it was super exciting!"],
-	    "createdAt": "2025-08-21T11:00:00Z"
-    },
-    {
-        "content": "I spent two days observing the results of the experiment.",
-        "creationMode": "text",
-        "emotionData": 4,
-        "scores": {
-            "grammar": 5,
-            "vocabulary": 5,
-            "pronunciation": 0
-        },
-        "keywords": ["observe", "experiment"],
-        "feedback": ["結構正確，但可以多補充觀察的細節或方法，使敘述更完整。"],
-		"suggestions": ["I dedicated two days to carefully observing the outcomes of the experiment.",
-		"I spent two days just watching how the experiment turned out."],
-        "createdAt": "2025-08-21T11:05:00Z"
-    }
-]
-```
-
-### 10) /ai/conversation/first_question — POST
-- 描述：使用者發送訊息，LLM 根據故事生成第一個問題
-- Headers: Authorization: Token <your-token>
-- Request 範例:
-```json
-{
-	"StoryId": "<story-id-1>"
-}
-```
-- 成功 Response (200):
-```json
-{
-	"question": "what do you think about that?",
-	"ConversationId": "<conversation-id-1>"
-}
-```
-
-### 11) /ai/conversation/next_question — POST
-- 描述：使用者回答上個問題，LLM 用 context 生成分別為專業（formal / professional）和生活化（casual / friendly）的句子，並產生下一題的問題
-- Headers: Authorization: Token <your-token>
-- Request 範例:
-```json
-{ 
-	"context": "I feel proud of myself. It makes me want to learn even more coding tomorrow.",
-	"ConversationId": "<conversation-id-1>"
-}
-```
-- 成功 Response (200):
-```json
-{ 	"question": "Awesome! Do you plan to use what you learned in a project?",
-	"suggestions": ["I feel proud of myself. Building this learning program makes me want to improve my coding skills even more.","I’m proud of myself! Can’t wait to learn more coding tomorrow."],
-	"ConversationId": "<conversation-id-2>"
-}
-```
-
-### 12) /ai/conversation/change_question — POST
-- 描述：使用者請求更換目前引導問題，LLM 根據故事與過去的對話內容生成新的問題
-- Headers: Authorization: Token <your-token>
-- Request 範例:
-```json
-{
-	"ConversationId": "<conversation-id-2>"
-}
-```
-- 成功 Response (200):
-```json
-{
-	"question": "That’s really cool! What exactly did you learn?",
-	"ConversationId": "<conversation-id-2>"
-}
-```
 
