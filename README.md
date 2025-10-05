@@ -6,17 +6,21 @@
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | `/auth/login/` | 用戶登入 | POST | email, password | refresh_token、access_token | 200, 400, 401 | - |
 | `token/refresh/` | 重新整理 Token | POST | refresh_token | new_token | 200, 400, 401 | - |
-| `token/verify/` | 驗證 Token | POST | access_token | - | 200, 400, 401 | - |
+| `token/verify/` | 驗證 Token | POST | access_token | - | 200, 400, 401 | -  |
 | `/auth/verification/send/` | 發送驗證碼 | POST | email | - | 200, 400 | verification_code 傳送至用戶電子郵件 |
 | `/auth/registration/confirm/` | 註冊確認 | POST | email, password, verification_code, name | - | 201, 400, 409 | - |
 | `/auth/password/reset/confirm/` | 密碼重設 | POST | email, password, verification_code | - | 200, 400, 401 | - |
-| `/auth/delete_account/` | 刪除帳號 | POST | email, password | - | 204, 400, 401 | 需攜帶 access_token |
-| `/auth/user/` | 取得用戶資料 | GET | - | email, name, level | 200, 401 | 需攜帶 access_token |
-| `/auth/user/` | 更新用戶資料 | PUT | new_name, level | - | 200, 400, 401 | 需攜帶 access_token |
-| `/api/chat/` | 發送聊天訊息 | POST | message | message_object (含分析) | 200, 400, 401, 500 | 需攜帶 access_token，返回 AI 回覆及語言分析 |
-| `/api/history/` | 取得聊天歷史 | GET | limit, offset | messages_array | 200, 401 | 需攜帶 access_token，支援分頁 |
-| `/api/message/{id}/` | 取得特定訊息 | GET | - | message_object | 200, 401, 404 | 需攜帶 access_token，用於輪詢檢查訊息狀態 |
-| `/llm/infer/` | LLM 推理服務 | POST | message_id, user_id, text, user_level | reply, grammar_errors, vocab_difficulty, misc | 200, 400, 500 | 內部服務 API，由 Django 後端呼叫 |
+| `/auth/delete_account/` | 永久刪除帳號 | POST | password | - | 204, 400, 401 | 需攜帶 access_token |
+| `/auth/user/` | 取得用戶資料 | GET | - | email, name | 200, 401 | 需攜帶 access_token |
+| `/auth/user/` | 更新用戶資料 | PUT | new_name | - | 200, 400, 401 | 需攜帶 access_token |
+| `/api/conversations/` | 取得對話列表 | GET | - | conversations_array | 200, 401 | 需攜帶 access_token |
+| `/api/conversations/` | 建立新對話 | POST | - | conversation_object | 201, 400, 401 | 需攜帶 access_token |
+| `/api/conversations/{id}/` | 取得特定對話 | GET | - | conversation_object | 200, 401, 404 | 需攜帶 access_token |
+| `/api/conversations/{id}/` | 更新對話資料 | PUT | - | - | 200, 400, 401, 404 | 需攜帶 access_token |
+| `/api/conversations/{id}/` | 刪除對話 | DELETE | - | - | 204, 401, 404 | 需攜帶 access_token，同時刪除所有相關訊息 |
+| `/api/conversations/{id}/messages/` | 取得對話訊息 | GET | limit, offset | messages_array | 200, 401, 404 | 需攜帶 access_token |
+| `/api/conversations/{id}/chat/` | 發送聊天訊息 | POST | message | message_object (含分析) | 200, 400, 401, 404, 500 | 需攜帶 access_token，返回 AI 回覆及語言分析 |
+| `/llm/infer/` | LLM 推理服務 | POST | message_id, user_id, text | reply, grammar_errors, vocab_difficulty, misc | 200, 400, 500 | 內部服務 API，由 Django 後端呼叫 |
 
 ### 表格2：資料欄位規格表
 
@@ -32,7 +36,6 @@
 | password   | string         | 是       | -     | 用戶密碼，需加密存儲           |
 | first_name | string         | 否       | ""    | 用戶名字（繼承自 AbstractUser） |
 | last_name  | string         | 否       | ""    | 用戶姓氏（繼承自 AbstractUser） |
-| level      | string         | 否       | "A2"  | CEFR 英語程度等級（A1, A2, B1, B2, C1, C2） |
 | is_active  | boolean        | 否       | True  | 用戶帳號是否啟用             |
 | is_staff   | boolean        | 否       | False | 用戶是否為管理員             |
 | is_superuser | boolean      | 否       | False | 用戶是否為超級管理員          |
@@ -40,16 +43,27 @@
 | last_login | datetime       | 否       | -     | 最後登入時間（繼承自 AbstractUser） |
 | created_at | datetime       | 否       | -     | 帳號建立時間（自動生成）       |
 
+#### 對話管理相關 Conversation
+
+| 欄位名稱 | 資料型別      | 是否必填 | 預設值 | 說明               |
+|:-:|:-:|:-:|:-:|:-:|
+| id         | integer        | 是       | -     | 對話唯一識別碼（主鍵）         |
+| user       | ForeignKey     | 是       | -     | 關聯到 User 模型的外鍵      |
+| created_at | datetime       | 否       | -     | 對話建立時間（自動生成）       |
+| updated_at | datetime       | 否       | -     | 對話最後更新時間（自動更新）   |
+| is_active  | boolean        | 否       | True  | 對話是否啟用（軟刪除）       |
+
 #### 聊天訊息相關 Message
 
 | 欄位名稱 | 資料型別      | 是否必填 | 預設值 | 說明               |
 |:-:|:-:|:-:|:-:|:-:|
-| id         | integer        | 是       | -     | 訊息唯一識別碼（主鍵）         |
-| user       | ForeignKey     | 是       | -     | 關聯到 User 模型的外鍵      |
-| role       | string         | 是       | -     | 訊息角色，選項：'user'、'ai'  |
-| content    | text           | 是       | -     | 訊息內容文字               |
-| metadata   | JSONField      | 否       | {}    | 額外的中繼資料（如來源裝置等）   |
-| created_at | datetime       | 否       | -     | 訊息建立時間（自動生成）       |
+| id           | integer        | 是       | -     | 訊息唯一識別碼（主鍵）         |
+| conversation | ForeignKey     | 是       | -     | 關聯到 Conversation 模型的外鍵 |
+| user         | ForeignKey     | 是       | -     | 關聯到 User 模型的外鍵      |
+| role         | string         | 是       | -     | 訊息角色，選項：'user'、'ai'  |
+| content      | text           | 是       | -     | 訊息內容文字               |
+| metadata     | JSONField      | 否       | {}    | 額外的中繼資料（如來源裝置等）   |
+| created_at   | datetime       | 否       | -     | 訊息建立時間（自動生成）       |
 
 #### 語言分析相關 Analysis
 
@@ -58,7 +72,6 @@
 | id             | integer        | 是       | -     | 分析唯一識別碼（主鍵）         |
 | message        | OneToOneField  | 是       | -     | 關聯到 Message 模型的一對一外鍵 |
 | grammar_errors | JSONField      | 否       | []    | 文法錯誤分析結果陣列           |
-| vocab_difficulty | JSONField    | 否       | []    | 詞彙難度分析結果陣列           |
 | misc           | JSONField      | 否       | {}    | 其他分析資料（信心分數等）      |
 | created_at     | datetime       | 否       | -     | 分析建立時間（自動生成）       |
 
@@ -80,7 +93,6 @@
 ```json
 {
   "word": "yesterday",           // 單詞
-  "level": "A2",                 // CEFR 難度等級
   "synonyms": ["the day before"], // 同義詞
   "example": "..."               // 使用範例
 }
@@ -102,8 +114,7 @@
 {
   "message_id": 123,
   "user_id": 456,
-  "text": "I go to school yesterday",
-  "user_level": "A2"
+  "text": "I go to school yesterday"
 }
 ```
 
@@ -124,7 +135,6 @@
   "vocab_difficulty": [
     {
       "word": "yesterday",
-      "level": "A2",
       "synonyms": ["the day before"],
       "example": "I played football yesterday afternoon."
     }
@@ -152,11 +162,11 @@
 
 ## Request/Response 範例
 
-### 1. 發送聊天訊息 API
+### 1. 在對話中發送訊息 API
 
 **Request:**
 ```http
-POST /api/chat/
+POST /api/conversations/3/chat/
 Authorization: Bearer <access_token>
 Content-Type: application/json
 
@@ -172,6 +182,7 @@ Content-Type: application/json
   "message": "Message processed successfully",
   "data": {
     "id": 456,
+    "conversation": 3,
     "user": 123,
     "role": "ai",
     "content": "That's great! I went to school yesterday too. What did you learn?",
@@ -191,7 +202,6 @@ Content-Type: application/json
       "vocab_difficulty": [
         {
           "word": "yesterday",
-          "level": "A2",
           "synonyms": ["the day before"],
           "example": "I played football yesterday afternoon."
         }
@@ -207,12 +217,14 @@ Content-Type: application/json
 ```
 
 **Response (非同步模式 - 立即返回):**
+- 後端先回應前端，但實際工作繼續在背景執行
 ```json
 {
   "status": "success",
   "message": "Message queued for processing",
   "data": {
     "id": 456,
+    "conversation": 3,
     "user": 123,
     "role": "ai",
     "content": "",
@@ -226,11 +238,11 @@ Content-Type: application/json
 }
 ```
 
-### 2. 取得聊天歷史 API
+### 2. 取得對話訊息歷史 API
 
 **Request:**
 ```http
-GET /api/history/?limit=20&offset=0
+GET /api/conversations/3/messages/?limit=20&offset=0
 Authorization: Bearer <access_token>
 ```
 
@@ -238,10 +250,11 @@ Authorization: Bearer <access_token>
 ```json
 {
   "status": "success",
-  "message": "History retrieved successfully",
+  "message": "Conversation messages retrieved successfully",
   "data": [
     {
       "id": 455,
+      "conversation": 3,
       "user": 123,
       "role": "user",
       "content": "I go to school yesterday",
@@ -251,6 +264,7 @@ Authorization: Bearer <access_token>
     },
     {
       "id": 456,
+      "conversation": 3,
       "user": 123,
       "role": "ai",
       "content": "That's great! I went to school yesterday too. What did you learn?",
@@ -299,7 +313,6 @@ Content-Type: application/json
   "vocab_difficulty": [
     {
       "word": "yesterday",
-      "level": "A2",
       "synonyms": ["the day before"],
       "example": "I played football yesterday afternoon."
     }
@@ -310,4 +323,116 @@ Content-Type: application/json
   }
 }
 ```
+
+### 4. 對話管理 API
+
+#### 4.1 取得對話列表
+
+**Request:**
+```http
+GET /api/conversations/
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Conversations retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "user": 123,
+      "created_at": "2025-10-05T09:00:00Z",
+      "updated_at": "2025-10-05T10:30:00Z",
+      "is_active": true,
+      "message_count": 8,
+      "last_message_preview": "That's great! I went to school yesterday too..."
+    },
+    {
+      "id": 2,
+      "user": 123,
+      "created_at": "2025-10-04T14:20:00Z",
+      "updated_at": "2025-10-04T15:45:00Z",
+      "is_active": true,
+      "message_count": 12,
+      "last_message_preview": "What places would you recommend..."
+    }
+  ]
+}
+```
+
+#### 4.2 建立新對話
+
+**Request:**
+```http
+POST /api/conversations/
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Conversation created successfully",
+  "data": {
+    "id": 3,
+    "user": 123,
+    "created_at": "2025-10-05T11:00:00Z",
+    "updated_at": "2025-10-05T11:00:00Z",
+    "is_active": true
+  }
+}
+```
+
+#### 4.3 在特定對話中發送訊息
+
+**Request:**
+```http
+POST /api/conversations/3/chat/
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "message": "Hello, I want to practice English today"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Message sent successfully",
+  "data": {
+    "id": 789,
+    "conversation": 3,
+    "user": 123,
+    "role": "ai",
+    "content": "Hello! That's wonderful. What topic would you like to practice today?",
+    "metadata": {},
+    "created_at": "2025-10-05T11:05:00Z",
+    "analysis": {
+      "grammar_errors": [],
+      "vocab_difficulty": [
+        {
+          "word": "practice",
+          "level": "A2",
+          "synonyms": ["exercise", "rehearse"],
+          "example": "I need to practice speaking English every day."
+        }
+      ],
+      "misc": {
+        "confidence": 0.98,
+        "processing_time": 0.8
+      },
+      "created_at": "2025-10-05T11:05:00Z"
+    }
+  }
+}
+```
+
+
 
