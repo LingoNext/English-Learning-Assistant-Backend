@@ -80,21 +80,21 @@
 **grammar_errors** 陣列元素結構：
 ```json
 {
-  "start": 4,                    // 錯誤開始位置
-  "end": 6,                      // 錯誤結束位置
-  "word": "go",                  // 錯誤單詞
-  "suggestion": "went",          // 建議修正
-  "rule": "past tense",          // 語法規則
-  "explanation": "..."           // 錯誤說明
+  "start": 4,                    
+  "end": 6,                      
+  "word": "go",                  
+  "suggestion": "went",          
+  "rule": "past tense",          
+  "explanation": "..."
 }
 ```
 
 **vocab_difficulty** 陣列元素結構：
 ```json
 {
-  "word": "yesterday",           // 單詞
-  "synonyms": ["the day before"], // 同義詞
-  "example": "..."               // 使用範例
+  "word": "yesterday",
+  "synonyms": ["the day before"],
+  "example": "..."               
 }
 ```
 
@@ -271,9 +271,9 @@ Authorization: Bearer <access_token>
       "metadata": {},
       "created_at": "2025-10-05T10:30:00Z",
       "analysis": {
-        "grammar_errors": [...],
-        "vocab_difficulty": [...],
-        "misc": {...},
+        "grammar_errors": [],
+        "vocab_difficulty": [],
+        "misc": {},
         "created_at": "2025-10-05T10:30:00Z"
       }
     }
@@ -433,6 +433,8 @@ Content-Type: application/json
   }
 }
 ```
+
+
 
 
 
