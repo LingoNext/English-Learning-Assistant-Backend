@@ -15,14 +15,14 @@
 |           `/auth/user/`           | 更新用戶資料 | PUT | new_name |             -              | 200, 400, 401 |       需攜帶 access_token       |
 |       `/api/conversations/`       | 取得對話列表 | GET | - |    conversations_array     | 200, 401 |       需攜帶 access_token       |
 |       `/api/conversations/`       | 建立新對話 | POST | - |    conversation_object     | 201, 400, 401 |       需攜帶 access_token       |
-|    `/api/conversations/<id>/`     | 取得特定對話 | GET | id |    conversation_object     | 200, 401, 404 |       需攜帶 access_token       |
-|    `/api/conversations/<id>/`     | 刪除對話 | DELETE | id |             -              | 204, 401, 404 |  需攜帶 access_token，同時刪除所有相關訊息  |
-|  `/api/conversations/<id>/msg/`   | 發送聊天訊息 | POST | content |      message_object        | 200, 400, 401, 404, 500 |      需攜帶 access_token       |
+|    `/api/conversations/`     | 取得特定對話 | GET | id |    conversation_object     | 200, 401, 404 |       需攜帶 access_token       |
+|    `/api/conversations/`     | 刪除對話 | DELETE | id |             -              | 204, 401, 404 |  需攜帶 access_token，同時刪除所有相關訊息  |
+|  `/api/conversations/msg/`   | 發送聊天訊息 | POST | content |      message_object        | 200, 400, 401, 404, 500 |      需攜帶 access_token       |
 
 ### 表格2：資料欄位規格表
 - 一個 User 可以有多個 Conversation
 - 一個 Conversation 內可以有多個 Message
-- Message 只能屬於一個 Conversation（ForeignKey）
+- Message 只能屬於一個 Conversation
 #### 用戶身份驗證相關 User (AbstractUser 擴展)
 - 因為 django-rest-framework-simplejwt 已經定義好 token 的欄位，所以這邊不重複定義。
 - 使用 Django 內建的 AbstractUser 作為基礎，擴展用戶資料。
@@ -60,9 +60,11 @@
 |     conversation      | ForeignKey | 是       |  -  |          關聯到 Conversation 模型的外鍵          |
 |        content        |    text    | 是       |  -  |                  訊息內容文字                  |
 |      ai_response      |    text    | 否       |  -  |              AI 回覆內容文字（若有）               |
-|        status         |   string   | 否       |  -  | 訊息處理狀態：'generating'、'completed'、'failed' |
+|        status         |   string   | 否       | 'generating' | 訊息處理狀態：'generating'（初始狀態）、'completed'（AI回應完成）、'failed'（AI回應失敗） |
 |      created_at       |  datetime  | 否       |  -  |               訊息建立時間（自動生成）               |
+|      updated_at       |  datetime  | 否       |  -  |            訊息最後更新時間（狀態變更時自動更新）            |
 #### LLM 推理請求/回應格式
+> 1 個 request → 2 個不同時段 response
 
 **推理請求格式 (InferRequest)**：
 ```json
@@ -73,7 +75,23 @@
 }
 ```
 
-**推理回應格式 (InferResponse)**：
+**第一階段回應格式 (初始回應 - status: generating)**：
+```json
+{
+  "status": "200",
+  "message": "Message received, AI is generating response",
+  "data": {
+    "message_id": 123,
+    "user_id": 456,
+    "content": "how to improve my english writing?",
+    "ai_response": null,
+    "status": "generating",
+    "created_at": "2025-12-11T10:30:00Z"
+  }
+}
+```
+
+**第二階段回應格式 (完成回應 - status: completed)**：
 ```json
 {
   "status": "200",
@@ -81,18 +99,30 @@
   "data": {
     "message_id": 123,
     "user_id": 456,
+    "content": "how to improve my english writing?",
     "ai_response": "Here are some effective ways to improve your English writing:\n\n1. **Read regularly**: Reading books, articles, and well-written content helps you absorb proper grammar, vocabulary, and sentence structures naturally.\n\n2. **Practice daily**: Set aside time each day for writing practice. Start with short paragraphs and gradually work up to longer pieces.\n\n3. **Learn grammar rules**: Understanding basic grammar rules like verb tenses, subject-verb agreement, and punctuation will make your writing clearer.\n\n4. **Expand your vocabulary**: Learn new words and phrases regularly. Use a dictionary and thesaurus to find more precise words.\n\n5. **Get feedback**: Share your writing with native speakers, teachers, or use writing assistance tools to identify areas for improvement.\n\n6. **Write about topics you enjoy**: This keeps you motivated and makes the practice more enjoyable.\n\n7. **Edit and revise**: Always review your work. Check for grammar mistakes, unclear sentences, and improve the flow of your ideas.\n\nRemember, improvement takes time and consistent practice. Don't be discouraged by mistakes – they're part of the learning process!",
-    "created_at": "2025-12-11T10:30:00Z"
+    "status": "completed",
+    "created_at": "2025-12-11T10:30:00Z",
+    "updated_at": "2025-12-11T10:30:45Z"
   }
 }
 ```
 
-**錯誤回應格式 (Error Response)**：
+**第二階段錯誤回應格式 (status: failed)**：
 ```json
 {
   "status": "500",
   "message": "Failed to generate AI response",
-  "content_type": "application/json; charset=utf-8"
+  "data": {
+    "message_id": 123,
+    "user_id": 456,
+    "content": "how to improve my english writing?",
+    "ai_response": null,
+    "status": "failed",
+    "created_at": "2025-12-11T10:30:00Z",
+    "updated_at": "2025-12-11T10:30:30Z",
+    "error_details": "AI service unavailable"
+  }
 }
 ```
 
@@ -106,5 +136,11 @@
 6. **Token 生命週期**: Access Token 會在 1 小時後過期，Refresh Token 會在 7 天後過期。登出時前端丟棄 Token 就好。
 7. **請求速率限制**: 為防止濫用，系統對每個用戶的請求頻率進行限制(未來擴充，可以不做)。
 8. **Response 格式**: 所有 API 的回應均使用統一的格式，包含 `status`、`message` 和 `data` 三個欄位。
+9. **訊息處理狀態流程**: 
+   - 當用戶發送訊息時，系統會立即回應一個狀態為 'generating' 的訊息物件
+   - 在背景進行 AI 推理處理
+   - 處理完成後更新訊息狀態為 'completed' 並填入 ai_response 欄位
+   - 若處理失敗則更新狀態為 'failed'
+   - 前端可根據狀態顯示載入動畫或錯誤訊息
 
 
