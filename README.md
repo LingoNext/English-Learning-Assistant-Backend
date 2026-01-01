@@ -2,21 +2,21 @@
 
 ### 表格1：API 端點規格表
 
-|              資源路徑               |    操作名稱    | HTTP方法 |                   請求參數                   |          回應 data           |           狀態碼           |             備註              |
-|:-------------------------------:|:----------:|:------:|:----------------------------------------:|:--------------------------:|:-----------------------:|:---------------------------:|
-|         `/auth/login/`          |    用戶登入    |  POST  |             email, password              | refresh_token、access_token |      200, 400, 401      |              -              |
-|   `/auth/verification/send/`    |   發送驗證碼    |  POST  |                  email                   |             -              |        200, 400         | verification_code 傳送至用戶電子郵件 |
-|  `/auth/registration/confirm/`  |    註冊確認    |  POST  | email, password, verification_code, name |             -              |      201, 400, 409      |              -              |
-| `/auth/password/reset/confirm/` |    密碼重設    |  POST  |    email, password, verification_code    |             -              |      200, 400, 401      |              -              |
-|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |                 password                 |             -              |      204, 400, 401      |      需攜帶 access_token       |
-|          `/auth/user/`          |   取得用戶資料   |  GET   |                    -                     |        email, name         |        200, 401         |      需攜帶 access_token       |
-|          `/auth/user/`          |   更新用戶資料   |  PUT   |                 new_name                 |             -              |      200, 400, 401      |      需攜帶 access_token       |
-|      `/api/conversations/`      |   取得對話列表   |  GET   |                    -                     |    conversations_array     |        200, 401         |      需攜帶 access_token       |
-|      `/api/conversations/`      |   建立新對話    |  POST  |                    -                     |    conversation_object     |      201, 400, 401      |      需攜帶 access_token       |
-|      `/api/conversations/`      |   取得特定對話   |  GET   |                    id                    |    conversation_object     |      200, 401, 404      |      需攜帶 access_token       |
-|      `/api/conversations/`      |    刪除對話    | DELETE |                    id                    |             -              |      204, 401, 404      | 需攜帶 access_token，同時刪除所有相關訊息 |
-|        `/token/refresh/`        | 重新整理 Token |  POST  |              refresh_token               |         new_token          |      200, 400, 401      |              -              |
-|        `/token/verify/`         |  驗證 Token  |  POST  |               access_token               |             -              |      200, 400, 401      |              -              |
+|              資源路徑               |    操作名稱    | HTTP方法 |                請求參數                |          回應 data           |      狀態碼      |        備註        |
+|:-------------------------------:|:----------:|:------:|:----------------------------------:|:--------------------------:|:-------------:|:----------------:|
+|         `/auth/login/`          |    用戶登入    |  POST  |          email, password           | refresh_token、access_token | 200, 400, 401 |        -         |
+|   `/auth/verification/send/`    |   發送驗證碼    |  POST  |               email                |             -              |   200, 400    |        -         |
+|  `/auth/registration/confirm/`  |    註冊確認    |  POST  | email, password, verification_code |             -              | 201, 400, 409 |        -         |
+| `/auth/password/reset/confirm/` |    密碼重設    |  POST  | email, password, verification_code |             -              | 200, 400, 401 |        -         |
+|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |              password              |             -              | 204, 400, 401 | 需攜帶 access_token |
+|          `/auth/user/`          |   取得用戶資料   |  GET   |                 -                  |        email, name         |   200, 401    | 需攜帶 access_token |
+|          `/auth/user/`          |   更新用戶資料   |  PUT   |              new_name              |             -              | 200, 400, 401 | 需攜帶 access_token |
+|      `/api/conversations/`      |   取得對話列表   |  GET   |                 -                  |    conversations_array     |   200, 401    | 需攜帶 access_token |
+|      `/api/conversations/`      |   建立新對話    |  POST  |                 -                  |    conversation_object     | 201, 400, 401 | 需攜帶 access_token |
+|      `/api/conversations/`      |   取得特定對話   |  GET   |                 id                 |    conversation_object     | 200, 401, 404 | 需攜帶 access_token |
+|      `/api/conversations/`      |    刪除對話    | DELETE |                 id                 |             -              | 204, 401, 404 | 需攜帶 access_token |
+|        `/token/refresh/`        | 重新整理 Token |  POST  |           refresh_token            |         new_token          | 200, 400, 401 |        -         |
+|        `/token/verify/`         |  驗證 Token  |  POST  |            access_token            |             -              | 200, 400, 401 |        -         |
 ### 另外實作的 API 端點規格表
 > 對話和 AR 功能相關的 API，待補充
 
@@ -66,7 +66,7 @@
 |  updated_at  |  datetime  |  否   |      -       |                      訊息最後更新時間（狀態變更時自動更新）                       |
 ## 備註
 
-1. **身份驗證**: 使用 Simple JWT，登入後驗證請求標頭中包含 `Authorization: Bearer <your-token>`。
+1. **身份驗證**: 使用 Simple JWT，登入後驗證請求標頭中包含 `Authorization: Bearer <token>`。
 2. **時間格式**: 所有時間欄位均使用 ISO 8601 格式 (例: `2025-08-08T10:30:00Z`)以利資料一致性與排序，但前端可以根據需要轉換為其他格式（如 yyyy/mm/dd）。
 3. **字元編碼**: 所有文字內容使用 UTF-8 編碼，不然前端 flutter 收到 Response 的 message 有中文會變成亂碼。
 4. **內容類型**: 所有請求和回應均使用 `application/json` 格式，除語音 `multipart/form-data`。

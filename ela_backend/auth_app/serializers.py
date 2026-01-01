@@ -14,15 +14,22 @@ class RegistrationConfirmSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, validators=[validate_password])
     verification_code = serializers.CharField()
-    name = serializers.CharField()
 
 # 用戶資料序列化器
 class UserDetailSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="first_name")
+    name = serializers.CharField(source="first_name", required=False, allow_blank=True, read_only=True)
+    new_name = serializers.CharField(source="first_name", required=False, allow_blank=True, write_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "email", "name"]
+        fields = ["email", "name", "new_name"]
+        read_only_fields = ["email"]
+
+    def update(self, instance, validated_data):
+        if 'first_name' in validated_data:
+            instance.first_name = validated_data.get('first_name', instance.first_name)
+            instance.save()
+        return instance
 
 # 刪除帳號序列化器
 class DeleteAccountSerializer(serializers.Serializer):

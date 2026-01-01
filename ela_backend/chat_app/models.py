@@ -17,24 +17,27 @@ class Conversation(models.Model):
 
 
 class Message(models.Model):
+    STATUS_CHOICES = [
+        ('generating', 'Generating'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+
     conversation = models.ForeignKey(
         Conversation,
         on_delete=models.CASCADE,
         related_name='messages'
     )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='user_messages'
+    content = models.TextField(help_text="用戶訊息內容")
+    ai_response = models.TextField(blank=True, null=True, help_text="AI 回覆內容")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='generating',
+        help_text="訊息處理狀態"
     )
-    role = models.CharField(
-        max_length=10,
-        choices=(('user','User'), ('ai','AI')),
-        default='user'
-    )
-    content = models.TextField(default="")
-    metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Message {self.id} in Conversation {self.conversation.id}"
