@@ -26,11 +26,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("S",'django-insecure-n(fc)j3oolawouvvm=zs5dw4z1=k5u1a+nd_79e73-n@+91xy4')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.onrender.com']
 
+APPEND_SLASH = True
 
 # Application definition
 
@@ -87,9 +87,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ela_backend',
-        'USER': os.getenv("DB_USER",'postgres'),
-        'PASSWORD': os.getenv("DB_PASSWORD",'C@t-Coffee89!'),
-        'HOST': 'localhost',
+        'USER': os.getenv("DB_USER", 'postgres'),
+        'PASSWORD': os.getenv("DB_PASSWORD", 'C@t-Coffee89!'),
+        'HOST': os.getenv("DB_HOST", 'localhost'),
         'PORT': '5432',
     }
 }
@@ -182,20 +182,8 @@ SIMPLE_JWT = {
 
 AUTH_USER_MODEL = 'auth_app.User'
 
-# CORS Settings - Allow all origins for development
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+# CORS Settings
+CORS_ALLOWED_ORIGINS = ["https://english-learning-assistant-backend-rxt3.onrender.com"] # 專案的雲端網址
 
 # Cache Settings (for verification codes)
 CACHES = {
