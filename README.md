@@ -5,6 +5,8 @@
 |              資源路徑               |    操作名稱    | HTTP方法 |                請求參數                |          回應 data           |      狀態碼      |        備註        |
 |:-------------------------------:|:----------:|:------:|:----------------------------------:|:--------------------------:|:-------------:|:----------------:|
 |         `/auth/login/`          |    用戶登入    |  POST  |          email, password           | refresh_token、access_token | 200, 400, 401 |        -         |
+|     `/auth/token/refresh/`      | 重新整理 Token |  POST  |           refresh_token            |         new_token          | 200, 400, 401 |        -         |
+|      `/auth/token/verify/`      |  驗證 Token  |  POST  |            access_token            |             -              | 200, 400, 401 |        -         |
 |   `/auth/verification/send/`    |   發送驗證碼    |  POST  |               email                |             -              |   200, 400    |        -         |
 |  `/auth/registration/confirm/`  |    註冊確認    |  POST  | email, password, verification_code |             -              | 201, 400, 409 |        -         |
 | `/auth/password/reset/confirm/` |    密碼重設    |  POST  | email, password, verification_code |             -              | 200, 400, 401 |        -         |
@@ -15,8 +17,6 @@
 |      `/api/conversations/`      |   建立新對話    |  POST  |                 -                  |    conversation_object     | 201, 400, 401 | 需攜帶 access_token |
 |      `/api/conversations/`      |   取得特定對話   |  GET   |                 id                 |    conversation_object     | 200, 401, 404 | 需攜帶 access_token |
 |      `/api/conversations/`      |    刪除對話    | DELETE |                 id                 |             -              | 204, 401, 404 | 需攜帶 access_token |
-|        `/token/refresh/`        | 重新整理 Token |  POST  |           refresh_token            |         new_token          | 200, 400, 401 |        -         |
-|        `/token/verify/`         |  驗證 Token  |  POST  |            access_token            |             -              | 200, 400, 401 |        -         |
 ### 另外實作的 API 端點規格表
 > 對話和 AR 功能相關的 API，待補充
 

@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model, authenticate
 from django.core.cache import cache
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.hashers import make_password
 from .serializers import (
@@ -137,6 +138,97 @@ class LoginView(APIView):
                 "message": "電子郵件或密碼錯誤",
                 "data": None
             }, status=status.HTTP_401_UNAUTHORIZED,content_type='application/json; charset=utf-8')
+
+
+# -----------------------------
+# Token 刷新
+# -----------------------------
+class TokenRefreshView(APIView):
+    """
+    POST /auth/token/refresh/
+    重新整理 Token
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.data.get("refresh_token")
+
+        if not refresh_token:
+            return Response({
+                "status": "error",
+                "message": "缺少 refresh_token 欄位",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+
+        try:
+            # 驗證並刷新 token
+            refresh = RefreshToken(refresh_token)
+            new_access_token = str(refresh.access_token)
+
+            return Response({
+                "status": "success",
+                "message": "Token 刷新成功",
+                "data": {
+                    "access_token": new_access_token
+                }
+            }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
+
+        except TokenError as e:
+            return Response({
+                "status": "error",
+                "message": "Token 無效或已過期",
+                "data": None
+            }, status=status.HTTP_401_UNAUTHORIZED, content_type='application/json; charset=utf-8')
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Token 處理失敗",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+
+
+# -----------------------------
+# Token 驗證
+# -----------------------------
+class TokenVerifyView(APIView):
+    """
+    POST /auth/token/verify/
+    驗證 Token
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        access_token = request.data.get("access_token")
+
+        if not access_token:
+            return Response({
+                "status": "error",
+                "message": "缺少 access_token 欄位",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+
+        try:
+            # 驗證 access token
+            AccessToken(access_token)
+
+            return Response({
+                "status": "success",
+                "message": "Token 有效",
+                "data": None
+            }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
+
+        except TokenError as e:
+            return Response({
+                "status": "error",
+                "message": "Token 無效或已過期",
+                "data": None
+            }, status=status.HTTP_401_UNAUTHORIZED, content_type='application/json; charset=utf-8')
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Token 處理失敗",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
 
 # -----------------------------
