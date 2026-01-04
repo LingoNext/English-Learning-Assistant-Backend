@@ -4,8 +4,8 @@
 
 |              資源路徑               |    操作名稱    | HTTP方法 |                請求參數                |          回應 data           |      狀態碼      |        備註        |
 |:-------------------------------:|:----------:|:------:|:----------------------------------:|:--------------------------:|:-------------:|:----------------:|
-|         `/auth/login/`          |    用戶登入    |  POST  |          email, password           | refresh_token、access_token | 200, 400, 401 |        -         |
-|     `/auth/token/refresh/`      | 重新整理 Token |  POST  |           refresh_token            |         new_token          | 200, 400, 401 |        -         |
+|         `/auth/login/`          |    用戶登入    |  POST  |          email, password           | access_token、refresh_token | 200, 400, 401 |        -         |
+|     `/auth/token/refresh/`      | 重新整理 Token |  POST  |           refresh_token            |        access_token        | 200, 400, 401 |        -         |
 |      `/auth/token/verify/`      |  驗證 Token  |  POST  |            access_token            |             -              | 200, 400, 401 |        -         |
 |   `/auth/verification/send/`    |   發送驗證碼    |  POST  |               email                |             -              |   200, 400    |        -         |
 |  `/auth/registration/confirm/`  |    註冊確認    |  POST  | email, password, verification_code |             -              | 201, 400, 409 |        -         |
@@ -15,8 +15,8 @@
 |          `/auth/user/`          |   更新用戶資料   |  PUT   |              new_name              |             -              | 200, 400, 401 | 需攜帶 access_token |
 |      `/api/conversations/`      |   取得對話列表   |  GET   |                 -                  |    conversations_array     |   200, 401    | 需攜帶 access_token |
 |      `/api/conversations/`      |   建立新對話    |  POST  |                 -                  |    conversation_object     | 201, 400, 401 | 需攜帶 access_token |
-|      `/api/conversations/`      |   取得特定對話   |  GET   |                 id                 |    conversation_object     | 200, 401, 404 | 需攜帶 access_token |
-|      `/api/conversations/`      |    刪除對話    | DELETE |                 id                 |             -              | 204, 401, 404 | 需攜帶 access_token |
+|   `/api/conversations/{id}/`    |   取得特定對話   |  GET   |                 -                  |    conversation_object     | 200, 401, 404 | 需攜帶 access_token |
+|   `/api/conversations/{id}/`    |    刪除對話    | DELETE |                 -                  |             -              | 204, 401, 404 | 需攜帶 access_token |
 ### 另外實作的 API 端點規格表
 > 對話和 AR 功能相關的 API，待補充
 
@@ -45,25 +45,23 @@
 
 #### 對話管理相關 Conversation
 
-|    欄位名稱    |    資料型別    | 是否必填 | 預設值  |       說明       |
-|:----------:|:----------:|:----:|:----:|:--------------:|
-|     id     |  integer   |  是   |  -   |       主鍵       |
-|    user    | ForeignKey |  是   |  -   | 關聯到 User 模型的外鍵 |
-| created_at |  datetime  |  否   |  -   |  對話建立時間（自動生成）  |
-| updated_at |  datetime  |  否   |  -   | 對話最後更新時間（自動更新） |
-| is_active  |  boolean   |  否   | True |  對話是否啟用（軟刪除）   |
+|        欄位名稱         |    資料型別    | 是否必填 | 預設值 |        說明         |
+|:-------------------:|:----------:|:----:|:---:|:-----------------:|
+|         id          |  integer   |  是   |  -  |        主鍵         |
+|        user         | ForeignKey |  是   |  -  |  關聯到 User 模型的外鍵   |
+|     created_at      |  datetime  |  否   |  -  |   對話建立時間（自動生成）    |
+|     updated_at      |  datetime  |  否   |  -  |  對話最後更新時間（自動更新）   |
+| first_user_question |   string   |  否   |  -  | 用戶第一個問題（序列化時計算得出） |
 
 #### 聊天訊息相關 Message
 
-|     欄位名稱     |    資料型別    | 是否必填 |     預設值      |                               說明                               |
-|:------------:|:----------:|:----:|:------------:|:--------------------------------------------------------------:|
-|      id      |  integer   |  是   |      -       |                               主鍵                               |
-| conversation | ForeignKey |  是   |      -       |                     關聯到 Conversation 模型的外鍵                     |
-|   content    |    text    |  是   |      -       |                             訊息內容文字                             |
-| ai_response  |    text    |  否   |      -       |                         AI 回覆內容文字（若有）                          |
-|    status    |   string   |  否   | 'generating' | 訊息處理狀態：'generating'（初始狀態）、'completed'（AI回應完成）、'failed'（AI回應失敗） |
-|  created_at  |  datetime  |  否   |      -       |                          訊息建立時間（自動生成）                          |
-|  updated_at  |  datetime  |  否   |      -       |                      訊息最後更新時間（狀態變更時自動更新）                       |
+|     欄位名稱     |    資料型別    | 是否必填 | 預設值 |           說明           |
+|:------------:|:----------:|:----:|:---:|:----------------------:|
+|      id      |  integer   |  是   |  -  |           主鍵           |
+| conversation | ForeignKey |  是   |  -  | 關聯到 Conversation 模型的外鍵 |
+|     text     |    text    |  是   |  -  |         訊息內容文字         |
+|   is_user    |  boolean   |  是   |  -  |     是否為用戶訊息（非AI訊息）     |
+|  timestamp   |  datetime  |  否   |  -  |      訊息建立時間（自動生成）      |
 ## 備註
 
 1. **身份驗證**: 使用 Simple JWT，登入後驗證請求標頭中包含 `Authorization: Bearer <token>`。

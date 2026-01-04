@@ -19,7 +19,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # 只取目前登入使用者的對話
-        return Conversation.objects.filter(user=self.request.user, is_active=True).order_by('-updated_at')
+        return Conversation.objects.filter(user=self.request.user).order_by('-updated_at')
 
     def list(self, request, *args, **kwargs):
         """取得對話列表"""
