@@ -183,7 +183,9 @@ SIMPLE_JWT = {
 AUTH_USER_MODEL = 'auth_app.User'
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = ["https://english-learning-assistant-backend-rxt3.onrender.com"] # 專案的雲端網址
+CORS_ALLOWED_ORIGINS = ["https://english-learning-assistant-backend-rxt3.onrender.com",
+                        "https://english-learning-assistant.pages.dev"]
+CORS_ALLOW_CREDENTIALS = True
 
 # Cache Settings (for verification codes)
 CACHES = {
