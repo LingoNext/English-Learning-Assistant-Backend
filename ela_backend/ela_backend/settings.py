@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'ela_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ela_backend',
+        'NAME': os.getenv("DB_NAME", 'ela_backend'),
         'USER': os.getenv("DB_USER", 'postgres'),
         'PASSWORD': os.getenv("DB_PASSWORD", 'C@t-Coffee89!'),
         'HOST': os.getenv("DB_HOST", 'localhost'),
