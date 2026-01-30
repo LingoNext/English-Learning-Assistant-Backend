@@ -102,8 +102,9 @@ class RegistrationConfirm(APIView):
         email = serializer.validated_data["email"]
         code = serializer.validated_data["verification_code"]
 
-        # 檢查驗證碼
-        cached_code = cache.get(f"verification_code_{email}")
+        email_normalized = email.strip().lower()  # 去空格、統一小寫
+        email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
+        cached_code = cache.get(f"verification_code_{email_hash}")
         if cached_code != code:
             return Response({
                 "status": "error",
@@ -119,8 +120,7 @@ class RegistrationConfirm(APIView):
                 "data": None
             }, status=status.HTTP_409_CONFLICT,content_type='application/json; charset=utf-8')
 
-        # 建立用戶
-        # 從 email 提取 @ 前面的字串作為 name
+        # 建立用戶(預設從 email 提取 @ 前面的字串作為 name)
         name = email.split('@')[0]
         user = User.objects.create_user(
             username=email,
@@ -130,7 +130,7 @@ class RegistrationConfirm(APIView):
         )
 
         # 刪除已使用的驗證碼
-        cache.delete(f"verification_code_{email}")
+        cache.delete(f"verification_code_{email_hash}")
 
         return Response({
             "status": "success",
@@ -284,6 +284,9 @@ class PasswordResetConfirmView(APIView):
         password = request.data.get("password")
         code = request.data.get("verification_code")
 
+        email_normalized = email.strip().lower()  # 去空格、統一小寫
+        email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
+
         # 基本欄位檢查
         if not all([email, password, code]):
             return Response({
@@ -303,7 +306,7 @@ class PasswordResetConfirmView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
 
         # 檢查驗證碼
-        cached_code = cache.get(f"verification_code_{email}")
+        cached_code = cache.get(f"verification_code_{email_hash}")
         if cached_code != code:
             return Response({
                 "status": "error",
@@ -316,7 +319,7 @@ class PasswordResetConfirmView(APIView):
         user.save()
 
         # 刪除已使用的驗證碼
-        cache.delete(f"verification_code_{email}")
+        cache.delete(f"verification_code_{email_hash}")
 
         return Response({
             "status": "success",
