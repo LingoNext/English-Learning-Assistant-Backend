@@ -4,7 +4,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model, authenticate
 from django.core.cache import cache
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.hashers import make_password
 from .serializers import (
@@ -13,6 +13,10 @@ from .serializers import (
     UserDetailSerializer,
     DeleteAccountSerializer
 )
+from django.conf import settings
+import requests
+import secrets
+import hashlib
 
 User = get_user_model()
 
@@ -22,30 +26,64 @@ User = get_user_model()
 class SendVerificationCode(APIView):
     """
     POST /auth/verification/send/
-    發送驗證碼（僅模擬，不實際發送email）
+    發送驗證碼（實際發送 email）
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
-        email = request.data.get("email")
+        # 從請求取得 email
+        email = request.data.get('email')
         if not email:
-            return Response({
-                "status": "error",
-                "message": "Email is required",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': '需要 email'}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+        email_normalized = email.strip().lower()  # 去空格、統一小寫
+        email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
+        # 先檢查短時間限制（10秒內）
+        last_sent = cache.get(f"verification_code_lock_{email_hash}")
+        if last_sent:
+            return Response({'message': '請勿頻繁發送驗證碼，稍後重試'}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
 
-        import random
-        code = str(random.randint(100000, 999999))
-        cache.set(f"verification_code_{email}", code, timeout=300)
-        print(f"Verification code for {email}: {code}")  # 測試用（實際應發送email）
+        # 產生六位數驗證碼
+        code = ''.join(str(secrets.randbelow(10)) for _ in range(6))
+        cache.set(f"verification_code_{email_hash}", code, timeout=300)
+        cache.set(f"verification_code_lock_{email_hash}", True, timeout=10)
 
-        return Response({
-            "status": "success",
-            "message": "驗證碼已發送，有效時間為5分鐘",
-            "data": None
-        }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
+        subject = "專題程式的驗證碼"
+        message = f"""您好：
 
+        您的驗證碼為：{code}
+        請於五分鐘內完成註冊。
+
+        若您並未進行註冊，請直接忽略此郵件，無需進行任何操作。
+
+        英語學習小幫手 APP
+        國立臺中科技大學 CSIE
+        2026 資訊與流通學院 大學部畢業專題
+        開發團隊：LingoNext
+
+        網頁版專題展示(使用手機 APP 更佳)：
+        https://english-learning-assistant.pages.dev/
+        """
+
+        # 使用 Resend API 發送郵件
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {getattr(settings, 'SEND_EMAIL_API_KEY', None)}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": getattr(settings, 'FROM_EMAIL', None),
+                "to": [email.strip()],# 只處理空格，但保持原本大小寫
+                "subject": subject,
+                "text": message,
+            }
+        )
+        if response.status_code == 200:
+            return Response({'message': '驗證碼已成功發送'}, status=status.HTTP_200_OK,
+                            content_type='application/json; charset=utf-8')
+        else:
+            return Response({'message': '郵件發送失敗'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            content_type='application/json; charset=utf-8')
 
 # -----------------------------
 # 註冊確認

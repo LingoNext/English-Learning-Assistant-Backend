@@ -19,9 +19,9 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# Mail settings
+FROM_EMAIL = "Toni <support@mail.tonixiang.me>"
+SEND_EMAIL_API_KEY = os.getenv("SEND_EMAIL_API_KEY")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("S",'django-insecure-n(fc)j3oolawouvvm=zs5dw4z1=k5u1a+nd_79e73-n@+91xy4')
@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
