@@ -26,7 +26,6 @@ class ConversationViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response({
-            "status": "success",
             "message": "對話列表取得成功",
             "data": serializer.data
         }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
@@ -37,7 +36,6 @@ class ConversationViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response({
-            "status": "success",
             "message": "對話建立成功",
             "data": serializer.data
         }, status=status.HTTP_201_CREATED,content_type='application/json; charset=utf-8')
@@ -48,13 +46,11 @@ class ConversationViewSet(viewsets.ModelViewSet):
             conversation = self.get_queryset().get(pk=kwargs['pk'])
             serializer = self.get_serializer(conversation)
             return Response({
-                "status": "success",
                 "message": "對話取得成功",
                 "data": serializer.data
             }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
         except Conversation.DoesNotExist:
             return Response({
-                "status": "error",
                 "message": "對話不存在",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND,content_type='application/json; charset=utf-8')
@@ -66,13 +62,11 @@ class ConversationViewSet(viewsets.ModelViewSet):
             # 由於 Message 的 ForeignKey 設定了 on_delete=CASCADE，刪除對話時會自動刪除相關訊息
             conversation.delete()
             return Response({
-                "status": "success",
                 "message": "對話已刪除",
                 "data": None
             }, status=status.HTTP_204_NO_CONTENT,content_type='application/json; charset=utf-8')
         except Conversation.DoesNotExist:
             return Response({
-                "status": "error",
                 "message": "對話不存在",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND,content_type='application/json; charset=utf-8')
@@ -106,17 +100,15 @@ class MessageViewSet(viewsets.ModelViewSet):
         conversation_id = request.query_params.get('conversation_id')
         if not conversation_id:
             return Response({
-                "status": "error",
                 "message": "需要提供 conversation_id 參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         # 驗證對話是否屬於當前用戶
         try:
-            conversation = Conversation.objects.get(id=conversation_id, user=request.user)
+            Conversation.objects.get(id=conversation_id, user=request.user)
         except Conversation.DoesNotExist:
             return Response({
-                "status": "error",
                 "message": "對話不存在或無權限",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
@@ -124,7 +116,6 @@ class MessageViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response({
-            "status": "success",
             "message": "訊息列表取得成功",
             "data": serializer.data
         }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
@@ -138,7 +129,6 @@ class MessageViewSet(viewsets.ModelViewSet):
             conversation = Conversation.objects.get(id=conversation_id, user=request.user)
         except Conversation.DoesNotExist:
             return Response({
-                "status": "error",
                 "message": "對話不存在或無權限",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
@@ -162,13 +152,11 @@ class MessageViewSet(viewsets.ModelViewSet):
             message = self.get_queryset().get(pk=kwargs['pk'])
             serializer = self.get_serializer(message)
             return Response({
-                "status": "success",
                 "message": "訊息取得成功",
                 "data": serializer.data
             }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
         except Message.DoesNotExist:
             return Response({
-                "status": "error",
                 "message": "訊息不存在",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
@@ -179,13 +167,11 @@ class MessageViewSet(viewsets.ModelViewSet):
             message = self.get_queryset().get(pk=kwargs['pk'])
             message.delete()
             return Response({
-                "status": "success",
                 "message": "訊息已刪除",
                 "data": None
             }, status=status.HTTP_204_NO_CONTENT, content_type='application/json; charset=utf-8')
         except Message.DoesNotExist:
             return Response({
-                "status": "error",
                 "message": "訊息不存在",
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
