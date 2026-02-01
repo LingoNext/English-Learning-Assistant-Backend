@@ -38,15 +38,22 @@ class SendVerificationCode(APIView):
     def post(self, request):
         # 從請求取得 email
         email = request.data.get('email')
-        if not email:
-            return Response({"message": "需要郵件","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
-
-        email_normalized = email.strip().lower()  # 去空格、統一小寫
-        email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
+        purpose=request.data.get('purpose')
 
         # 記錄客戶端 IP 用於日誌
         client_ip = get_client_ip(request)
-        print(f"Verification code requested for {email_normalized} from IP {client_ip}")
+        print(f"Verification code requested for {email} from IP {client_ip}")
+
+        if not email or not purpose:
+            return Response({"message": "缺少必要欄位","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+        if purpose not in ['registration','password_reset']:
+            return Response({"message": "目的參數錯誤","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+        # 檢查 email 格式
+        if "@" not in email or "." not in email.split("@")[-1]:
+            return Response({"message": "無效的電子郵件地址","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+
+        email_normalized = email.strip().lower()  # 去空格、統一小寫
+        email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
 
         # 產生六位數驗證碼(時間敏感操作，不可用 random，改使用 secrets 模組)
         code = ''.join(str(secrets.randbelow(10)) for _ in range(6))
@@ -54,11 +61,16 @@ class SendVerificationCode(APIView):
         # 將驗證碼存入快取，有效期五分鐘
         cache.set(f"verification_code_{email_hash}", code, timeout=300)
 
+        if purpose=='registration':
+            action="註冊"
+        else:
+            action="重設密碼"
+
         subject = "專題程式的驗證碼"
         message = f"""您好：
 
         您的驗證碼為：{code}
-        請於五分鐘內完成註冊。
+        請於五分鐘內完成{action}。
 
         若您並未進行註冊，請直接忽略此郵件，無需進行任何操作。
 
