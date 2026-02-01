@@ -8,10 +8,10 @@ from .serializers import ConversationSerializer, MessageSerializer
 class ConversationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Conversation CRUD operations
-    - GET /api/conversations/ - 取得對話列表
-    - POST /api/conversations/ - 建立新對話
-    - GET /api/conversations/{id}/ - 取得特定對話
-    - DELETE /api/conversations/{id}/ - 刪除對話（同時刪除所有相關訊息）
+    - GET /chat/conversations/ - 取得對話列表
+    - POST /chat/conversations/ - 建立新對話
+    - GET /chat/conversations/{id}/ - 取得特定對話
+    - DELETE /chat/conversations/{id}/ - 刪除對話（同時刪除所有相關訊息）
     """
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
@@ -75,10 +75,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
 class MessageViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Message CRUD operations
-    - GET /api/messages/?conversation_id={id} - 取得特定對話的所有訊息
-    - POST /api/messages/ - 建立新訊息
-    - GET /api/messages/{id}/ - 取得特定訊息
-    - DELETE /api/messages/{id}/ - 刪除訊息
+    - GET /chat/messages/?conversation_id={id} - 取得特定對話的所有訊息
+    - POST /chat/messages/ - 建立新訊息
+    - GET /chat/messages/{id}/ - 取得特定訊息
+    - DELETE /chat/messages/{id}/ - 刪除訊息
     """
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
