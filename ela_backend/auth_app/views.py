@@ -14,6 +14,10 @@ from .serializers import (
     DeleteAccountSerializer
 )
 from django.conf import settings
+from .rate_limiter import (
+    email_rate_limit,
+    get_client_ip
+)
 import requests
 import secrets
 import hashlib
@@ -30,23 +34,25 @@ class SendVerificationCode(APIView):
     """
     permission_classes = [AllowAny]
 
+    @email_rate_limit
     def post(self, request):
         # 從請求取得 email
         email = request.data.get('email')
         if not email:
             return Response({"message": "需要郵件","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+
         email_normalized = email.strip().lower()  # 去空格、統一小寫
         email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
-        # 先檢查短時間限制（10秒內）
-        last_sent = cache.get(f"verification_code_lock_{email_hash}")
-        if last_sent:
-            return Response({"message": "請勿頻繁發送驗證碼，稍後重試","data":None}, status=status.HTTP_429_TOO_MANY_REQUESTS,content_type='application/json; charset=utf-8')
 
-        # 產生六位數驗證碼(時間敏感操作，使用 secrets 模組)
+        # 記錄客戶端 IP 用於日誌
+        client_ip = get_client_ip(request)
+        print(f"Verification code requested for {email_normalized} from IP {client_ip}")
+
+        # 產生六位數驗證碼(時間敏感操作，不可用 random，改使用 secrets 模組)
         code = ''.join(str(secrets.randbelow(10)) for _ in range(6))
+
         # 將驗證碼存入快取，有效期五分鐘
         cache.set(f"verification_code_{email_hash}", code, timeout=300)
-        cache.set(f"verification_code_lock_{email_hash}", True, timeout=10)
 
         subject = "專題程式的驗證碼"
         message = f"""您好：
@@ -154,7 +160,11 @@ class LoginView(APIView):
 
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
-
+        if not email or not password:
+            return Response({
+                "message": "缺少必要欄位",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
         # 使用 Django authenticate 驗證
         user = authenticate(request, username=email, password=password)
 
@@ -299,49 +309,6 @@ class PasswordResetConfirmView(APIView):
             "data": None
         }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
 
-
-# -----------------------------
-# 用戶資料
-# -----------------------------
-class UserDetail(APIView):
-    """
-    GET /auth/user/ - 取得用戶資料
-    PUT /auth/user/ - 更新用戶資料
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        serializer = UserDetailSerializer(request.user)
-        return Response({
-            "message": "用戶資料取得成功",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
-
-    def put(self, request):
-        new_name = request.data.get("new_name", "").strip()
-        if not new_name:
-            return Response({
-                "message": "缺少必要欄位",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
-        if new_name == "":
-            return Response({
-                "message": "名稱不可為空",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
-        serializer = UserDetailSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "message": "用戶資料更新成功",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
-        return Response({
-            "message": "資料驗證失敗",
-            "data": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
-
-
 # -----------------------------
 # 刪除帳號
 # -----------------------------
@@ -372,3 +339,39 @@ class DeleteAccount(APIView):
             "message": "帳號已成功刪除",
             "data": None
         }, status=status.HTTP_204_NO_CONTENT,content_type='application/json; charset=utf-8')
+
+# -----------------------------
+# 用戶資料
+# -----------------------------
+class UserDetail(APIView):
+    """
+    GET /auth/user/ - 取得用戶資料
+    PUT /auth/user/ - 更新用戶資料
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserDetailSerializer(request.user)
+        return Response({
+            "message": "用戶資料取得成功",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
+
+    def put(self, request):
+        new_name = request.data.get("new_name", "").strip()
+        if not new_name:
+            return Response({
+                "message": "缺少必要欄位",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+        serializer = UserDetailSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "用戶資料更新成功",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
+        return Response({
+            "message": "資料驗證失敗",
+            "data": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')

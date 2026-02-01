@@ -186,10 +186,22 @@ CORS_ALLOWED_ORIGINS = ["https://english-learning-assistant-backend-rxt3.onrende
                         "https://english-learning-assistant.pages.dev"]
 CORS_ALLOW_CREDENTIALS = True
 
-# Cache Settings (for verification codes)
+# Cache Settings (for verification codes and rate limiting)
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 3600,  # 1 hour default timeout
+        'OPTIONS': {
+            'MAX_ENTRIES': 10000,  # 增加最大條目數以支持更多速率限制記錄
+        }
+    },
+    'rate_limit': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'rate-limit-cache',
+        'TIMEOUT': 3600,  # 1 hour for rate limiting
+        'OPTIONS': {
+            'MAX_ENTRIES': 5000,  # 專門為速率限制優化
+        }
     }
 }
