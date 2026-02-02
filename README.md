@@ -14,7 +14,7 @@
 |          `/auth/user/`          |   取得用戶資料   |  GET   |                 -                  |                                     email, name                                     |      200, 401      | 需攜帶 access_token |
 |          `/auth/user/`          |   更新用戶資料   |  PUT   |              new_name              |                                          -                                          |   200, 400, 401    | 需攜帶 access_token |
 |   `/chat/conversations/all/`    |   取得對話列表   |  GET   |                 -                  | Array<{ conversation_id: number, first_user_question: string,updated_at:datetime }> |      200, 401      | 需攜帶 access_token |
-|     `/chat/conversations/`      |   取得特定對話   |  GET   |          conversation_id           |                         Array<{text:string,is_user:bool }>                          |      200, 401      | 需攜帶 access_token |
+|      `/chat/conversation/`      |   取得特定對話   |  POST  |          conversation_id           |                         Array<{text:string,is_user:bool }>                          |      200, 401      | 需攜帶 access_token |
 |     `/chat/conversations/`      |   建立新對話    |  POST  |           text, is_user            |                                          -                                          |   201, 400, 401    | 需攜帶 access_token |
 |     `/chat/conversations/`      |    刪除對話    | DELETE |          conversation_id           |                                          -                                          |   204, 401, 404    | 需攜帶 access_token |
 |        `/chat/messages/`        |   建立新訊息    |  POST  |   conversation_id, text, is_user   |                                          -                                          | 201, 400, 401, 404 | 需攜帶 access_token |

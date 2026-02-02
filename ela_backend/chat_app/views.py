@@ -22,15 +22,13 @@ class ConversationAllView(APIView):
         }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
 
 
-class ConversationView(APIView):
+class ConversationDetailView(APIView):
     """
-    GET /chat/conversations/ - 取得特定對話的訊息 (conversation_id in body)
-    POST /chat/conversations/ - 建立新對話（同時建立第一則訊息）
-    DELETE /chat/conversations/ - 刪除對話 (conversation_id in body)
+    POST /chat/conversation/ - 取得特定對話的訊息 (conversation_id in body)
     """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def post(self, request):
         """取得特定對話的訊息"""
         conversation_id = request.data.get('conversation_id')
         if not conversation_id:
@@ -52,6 +50,14 @@ class ConversationView(APIView):
                 "message": "對話不存在或無權限",
                 "data": None
             }, status=status.HTTP_401_UNAUTHORIZED, content_type='application/json; charset=utf-8')
+
+
+class ConversationView(APIView):
+    """
+    POST /chat/conversations/ - 建立新對話（同時建立第一則訊息）
+    DELETE /chat/conversations/ - 刪除對話 (conversation_id in body)
+    """
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         """建立新對話（同時建立第一則訊息）"""
@@ -143,5 +149,4 @@ class MessageView(APIView):
             "message": "訊息建立成功",
             "data": None
         }, status=status.HTTP_201_CREATED, content_type='application/json; charset=utf-8')
-
 
