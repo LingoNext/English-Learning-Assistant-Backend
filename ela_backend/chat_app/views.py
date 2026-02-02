@@ -24,7 +24,7 @@ class ConversationAllView(APIView):
 
 class ConversationDetailView(APIView):
     """
-    POST /chat/conversation/ - 取得特定對話的訊息 (conversation_id in body)
+    POST /chat/conversation/ - 取得特定對話的訊息
     """
     permission_classes = [IsAuthenticated]
 
@@ -33,7 +33,7 @@ class ConversationDetailView(APIView):
         conversation_id = request.data.get('conversation_id')
         if not conversation_id:
             return Response({
-                "message": "需要提供 conversation_id 參數",
+                "message": "缺少必要參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
@@ -54,19 +54,19 @@ class ConversationDetailView(APIView):
 
 class ConversationView(APIView):
     """
-    POST /chat/conversations/ - 建立新對話（同時建立第一則訊息）
-    DELETE /chat/conversations/ - 刪除對話 (conversation_id in body)
+    POST /chat/conversations/ - 建立新對話
+    DELETE /chat/conversations/ - 刪除對話
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         """建立新對話（同時建立第一則訊息）"""
         text = request.data.get('text')
-        is_user = request.data.get('is_user', True)
+        is_user = request.data.get('is_user')
 
-        if not text:
+        if not text or is_user is None:
             return Response({
-                "message": "需要提供訊息內容",
+                "message": "缺少必要參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
@@ -90,7 +90,7 @@ class ConversationView(APIView):
         conversation_id = request.data.get('conversation_id')
         if not conversation_id:
             return Response({
-                "message": "需要提供 conversation_id 參數",
+                "message": "缺少必要參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
@@ -118,11 +118,11 @@ class MessageView(APIView):
         """建立新訊息"""
         conversation_id = request.data.get('conversation_id')
         text = request.data.get('text')
-        is_user = request.data.get('is_user', True)
+        is_user = request.data.get('is_user')
 
-        if not conversation_id or not text:
+        if not conversation_id or not text or is_user is None:
             return Response({
-                "message": "需要提供 conversation_id 和 text 參數",
+                "message": "缺少必要參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 

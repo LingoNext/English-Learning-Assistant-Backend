@@ -4,7 +4,7 @@ from django.db import models
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError("電子郵件地址必須提供")
+            raise ValueError("電子郵件必須提供")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -14,10 +14,10 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     # email: 電子郵件，必填，唯一
-    email = models.EmailField(unique=True, help_text="電子郵件")
+    email = models.EmailField(unique=True)
 
     # 覆寫AbstractUser的first_name以符合規格（必填，預設值""）
-    first_name = models.CharField(max_length=150, default="", help_text="名字（繼承自 AbstractUser）")
+    first_name = models.CharField(max_length=150, default="")
 
     # 以下欄位繼承自AbstractUser，符合規格要求：
     # last_name: 姓氏（string, 非必填, 預設""）
@@ -28,10 +28,10 @@ class User(AbstractUser):
     # last_login: 最後登入時間（datetime, 非必填, 自動更新）
 
     # created_at: 帳號建立時間（datetime, 非必填, 自動生成）
-    created_at = models.DateTimeField(auto_now_add=True, help_text="帳號建立時間（自動生成）")
+    created_at = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []  # 空的，只需要email和password
+    REQUIRED_FIELDS = []  # 空的，只需要 email 和 password
 
     objects = UserManager()
 

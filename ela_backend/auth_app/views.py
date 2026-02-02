@@ -29,8 +29,7 @@ User = get_user_model()
 # -----------------------------
 class SendVerificationCode(APIView):
     """
-    POST /auth/verification/send/
-    發送驗證碼（實際發送 email）
+    POST /auth/verification/send/ - 發送驗證碼
     """
     permission_classes = [AllowAny]
 
@@ -45,7 +44,7 @@ class SendVerificationCode(APIView):
         print(f"Verification code requested for {email} from IP {client_ip}")
 
         if not email or not purpose:
-            return Response({"message": "缺少必要欄位","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+            return Response({"message": "缺少必要參數","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
         if purpose not in ['registration','password_reset']:
             return Response({"message": "目的參數錯誤","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
         # 檢查 email 格式
@@ -66,21 +65,35 @@ class SendVerificationCode(APIView):
         else:
             action="重設密碼"
 
-        subject = "專題程式的驗證碼"
-        message = f"""您好：
+        subject = "【ELA】帳號驗證碼通知"
 
-        您的驗證碼為：{code}
-        請於五分鐘內完成{action}。
+        message = f"""您好，
 
-        若您並未進行註冊，請直接忽略此郵件，無需進行任何操作。
+        我們收到一筆帳號{action}請求，以下為您的驗證碼：
 
+        ────────────────────
+        驗證碼：{code}
+        有效期限：5 分鐘
+        ────────────────────
+
+        請於有效期限內完成驗證。
+        若超過時間，請重新發送驗證碼。
+
+        【安全資訊】
+        請求來源 IP：{client_ip}
+
+        若您未曾進行此操作，請忽略此郵件，您的帳號將不會受到影響。
+
+        —
         英語學習小幫手 APP
-        國立臺中科技大學 CSIE
-        2026 資訊與流通學院 大學部畢業專題
         開發團隊：LingoNext
 
-        網頁版專題展示(使用手機 APP 更佳)：
+        國立臺中科技大學 資訊工程系
+        2026 資訊與流通學院 大學部畢業專題
+
+        專題展示頁面：
         https://english-learning-assistant.pages.dev/
+        （建議使用手機 App 體驗完整功能）
         """
 
         # 使用 Resend API 發送郵件
@@ -109,8 +122,7 @@ class SendVerificationCode(APIView):
 # -----------------------------
 class RegistrationConfirm(APIView):
     """
-    POST /auth/registration/confirm/
-    註冊確認
+    POST /auth/registration/confirm/ - 註冊確認
     """
     permission_classes = [AllowAny]
 
@@ -120,6 +132,11 @@ class RegistrationConfirm(APIView):
 
         email = serializer.validated_data["email"]
         code = serializer.validated_data["verification_code"]
+        if not email or not code:
+            return Response({
+                "message": "缺少必要參數",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
 
         email_normalized = email.strip().lower()  # 去空格、統一小寫
         email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
@@ -160,8 +177,7 @@ class RegistrationConfirm(APIView):
 # -----------------------------
 class LoginView(APIView):
     """
-    POST /auth/login/
-    用戶登入
+    POST /auth/login/ - 用戶登入
     """
     permission_classes = [AllowAny]
 
@@ -173,7 +189,7 @@ class LoginView(APIView):
         password = serializer.validated_data["password"]
         if not email or not password:
             return Response({
-                "message": "缺少必要欄位",
+                "message": "缺少必要參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
         # 使用 Django authenticate 驗證
@@ -201,8 +217,7 @@ class LoginView(APIView):
 # -----------------------------
 class TokenRefreshView(APIView):
     """
-    POST /auth/token/refresh/
-    重新整理 Token
+    POST /auth/token/refresh/ - 重新整理 Token
     """
     permission_classes = [AllowAny]
 
@@ -211,7 +226,7 @@ class TokenRefreshView(APIView):
 
         if not refresh_token:
             return Response({
-                "message": "缺少 refresh_token 欄位",
+                "message": "缺少必要參數",
             }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         try:
@@ -237,8 +252,7 @@ class TokenRefreshView(APIView):
 # -----------------------------
 class TokenVerifyView(APIView):
     """
-    POST /auth/token/verify/
-    驗證 Token
+    POST /auth/token/verify/ - 驗證 Token
     """
     permission_classes = [AllowAny]
 
@@ -247,7 +261,7 @@ class TokenVerifyView(APIView):
 
         if not access_token:
             return Response({
-                "message": "缺少 access_token 欄位",
+                "message": "缺少必要參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
@@ -271,8 +285,7 @@ class TokenVerifyView(APIView):
 # -----------------------------
 class PasswordResetConfirmView(APIView):
     """
-    POST /auth/password/reset/confirm/
-    密碼重設確認
+    POST /auth/password/reset/confirm/ - 密碼重設確認
     """
     permission_classes = [AllowAny]
 
@@ -287,7 +300,7 @@ class PasswordResetConfirmView(APIView):
         # 基本欄位檢查
         if not all([email, password, code]):
             return Response({
-                "message": "缺少必要欄位",
+                "message": "缺少必要參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
 
@@ -325,8 +338,7 @@ class PasswordResetConfirmView(APIView):
 # -----------------------------
 class DeleteAccount(APIView):
     """
-    POST /auth/delete_account/
-    永久刪除帳號
+    POST /auth/delete_account/ - 永久刪除帳號
     """
     permission_classes = [IsAuthenticated]
 
@@ -337,7 +349,7 @@ class DeleteAccount(APIView):
         password = serializer.validated_data["password"]
         if not password:
             return Response({
-                "message": "密碼為必填欄位",
+                "message": "缺少必要參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
         if not request.user.check_password(password):
@@ -372,7 +384,7 @@ class UserDetail(APIView):
         new_name = request.data.get("new_name", "").strip()
         if not new_name:
             return Response({
-                "message": "缺少必要欄位",
+                "message": "缺少必要參數",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
         serializer = UserDetailSerializer(request.user, data=request.data, partial=True)
