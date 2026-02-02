@@ -140,7 +140,6 @@ class RegistrationConfirm(APIView):
         # 建立用戶(預設從 email 提取 @ 前面的字串作為 name)
         name = email.split('@')[0]
         user = User(
-            username=email,
             email=email,
             first_name=name
         )
