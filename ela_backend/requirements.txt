@@ -1,9 +1,9 @@
-django-cors-headers==3.14.0
-djangorestframework==3.14.0
-django>=4.2,<5.0
-djangorestframework-simplejwt==5.2.2
-setuptools==68.2.2
+django-cors-headers==4.9.0
+djangorestframework==3.16.1
+django>=6.0.2
+djangorestframework-simplejwt==5.5.1
+setuptools==81.0.0
 psycopg[binary]>=3.1.18
-python-dotenv==1.0.0
-gunicorn==22.0.0
-requests
+python-dotenv==1.2.1
+gunicorn==25.0.2
+requests>=2.31.0
