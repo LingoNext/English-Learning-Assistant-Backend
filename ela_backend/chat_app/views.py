@@ -149,4 +149,3 @@ class MessageView(APIView):
             "message": "訊息建立成功",
             "data": None
         }, status=status.HTTP_201_CREATED, content_type='application/json; charset=utf-8')
-

@@ -24,6 +24,7 @@ import hashlib
 
 User = get_user_model()
 
+
 # -----------------------------
 # 發送驗證碼
 # -----------------------------
@@ -37,19 +38,22 @@ class SendVerificationCode(APIView):
     def post(self, request):
         # 從請求取得 email
         email = request.data.get('email')
-        purpose=request.data.get('purpose')
+        purpose = request.data.get('purpose')
 
         # 記錄客戶端 IP 用於日誌
         client_ip = get_client_ip(request)
         print(f"Verification code requested for {email} from IP {client_ip}")
 
         if not email or not purpose:
-            return Response({"message": "缺少必要參數","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
-        if purpose not in ['registration','password_reset']:
-            return Response({"message": "目的參數錯誤","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+            return Response({"message": "缺少必要參數", "data": None}, status=status.HTTP_400_BAD_REQUEST,
+                            content_type='application/json; charset=utf-8')
+        if purpose not in ['registration', 'password_reset']:
+            return Response({"message": "目的參數錯誤", "data": None}, status=status.HTTP_400_BAD_REQUEST,
+                            content_type='application/json; charset=utf-8')
         # 檢查 email 格式
         if "@" not in email or "." not in email.split("@")[-1]:
-            return Response({"message": "無效的電子郵件地址","data":None}, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+            return Response({"message": "無效的電子郵件地址", "data": None}, status=status.HTTP_400_BAD_REQUEST,
+                            content_type='application/json; charset=utf-8')
 
         email_normalized = email.strip().lower()  # 去空格、統一小寫
         email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
@@ -60,15 +64,15 @@ class SendVerificationCode(APIView):
         # 將驗證碼存入快取，有效期五分鐘
         cache.set(f"verification_code_{email_hash}", code, timeout=300)
 
-        if purpose=='registration':
-            action="註冊"
+        if purpose == 'registration':
+            action = "註冊"
         else:
-            action="重設密碼"
+            action = "重設密碼"
 
-        subject = "【ELA】帳號驗證碼通知"
+        subject = "帳號驗證碼通知"
 
-        message = f"""您好，
-
+        message = f"""
+        您好，
         我們收到一筆帳號{action}請求，以下為您的驗證碼：
 
         ────────────────────
@@ -81,8 +85,7 @@ class SendVerificationCode(APIView):
 
         【安全資訊】
         請求來源 IP：{client_ip}
-
-        若您未曾進行此操作，請忽略此郵件，您的帳號將不會受到影響。
+        若您未曾進行此操作，請忽略此郵件，將不會受到影響。
 
         —
         英語學習小幫手 APP
@@ -105,17 +108,18 @@ class SendVerificationCode(APIView):
             },
             json={
                 "from": getattr(settings, 'FROM_EMAIL', None),
-                "to": [email.strip()],# 只處理空格，但保持原本大小寫
+                "to": [email.strip()],
                 "subject": subject,
                 "text": message,
             }
         )
         if response.status_code == 200:
-            return Response({"message": "驗證碼已成功發送","data": None}, status=status.HTTP_200_OK,
+            return Response({"message": "驗證碼已成功發送", "data": None}, status=status.HTTP_200_OK,
                             content_type='application/json; charset=utf-8')
         else:
-            return Response({"message": "郵件發送失敗","data": None}, status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return Response({"message": "郵件發送失敗", "data": None}, status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             content_type='application/json; charset=utf-8')
+
 
 # -----------------------------
 # 註冊確認
@@ -136,7 +140,7 @@ class RegistrationConfirm(APIView):
             return Response({
                 "message": "缺少必要參數",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         email_normalized = email.strip().lower()  # 去空格、統一小寫
         email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
@@ -145,14 +149,14 @@ class RegistrationConfirm(APIView):
             return Response({
                 "message": "驗證碼錯誤或已失效",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         # 檢查 email 是否已註冊
         if User.objects.filter(email=email).exists():
             return Response({
                 "message": "此電子郵件已被註冊",
                 "data": None
-            }, status=status.HTTP_409_CONFLICT,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_409_CONFLICT, content_type='application/json; charset=utf-8')
 
         # 建立用戶(預設從 email 提取 @ 前面的字串作為 name)
         name = email.split('@')[0]
@@ -169,7 +173,7 @@ class RegistrationConfirm(APIView):
         return Response({
             "message": "註冊成功",
             "data": None
-        }, status=status.HTTP_201_CREATED,content_type='application/json; charset=utf-8')
+        }, status=status.HTTP_201_CREATED, content_type='application/json; charset=utf-8')
 
 
 # -----------------------------
@@ -191,7 +195,7 @@ class LoginView(APIView):
             return Response({
                 "message": "缺少必要參數",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
         # 使用 Django authenticate 驗證
         user = authenticate(request, username=email, password=password)
 
@@ -204,12 +208,12 @@ class LoginView(APIView):
                     "access_token": str(refresh.access_token),
                     "refresh_token": str(refresh)
                 }
-            }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
         else:
             return Response({
                 "message": "電子郵件或密碼錯誤",
                 "data": None
-            }, status=status.HTTP_401_UNAUTHORIZED,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_401_UNAUTHORIZED, content_type='application/json; charset=utf-8')
 
 
 # -----------------------------
@@ -302,7 +306,7 @@ class PasswordResetConfirmView(APIView):
             return Response({
                 "message": "缺少必要參數",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         # 查找使用者
         try:
@@ -311,7 +315,7 @@ class PasswordResetConfirmView(APIView):
             return Response({
                 "message": "用戶不存在",
                 "data": None
-            }, status=status.HTTP_404_NOT_FOUND,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
 
         # 檢查驗證碼
         cached_code = cache.get(f"verification_code_{email_hash}")
@@ -319,7 +323,7 @@ class PasswordResetConfirmView(APIView):
             return Response({
                 "message": "驗證碼錯誤或已失效",
                 "data": None
-            }, status=status.HTTP_401_UNAUTHORIZED,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_401_UNAUTHORIZED, content_type='application/json; charset=utf-8')
 
         # 修改密碼
         user.password = make_password(password)
@@ -331,7 +335,8 @@ class PasswordResetConfirmView(APIView):
         return Response({
             "message": "密碼重設成功",
             "data": None
-        }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
+        }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
+
 
 # -----------------------------
 # 刪除帳號
@@ -351,17 +356,18 @@ class DeleteAccount(APIView):
             return Response({
                 "message": "缺少必要參數",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
         if not request.user.check_password(password):
             return Response({
                 "message": "密碼錯誤",
                 "data": None
-            }, status=status.HTTP_401_UNAUTHORIZED,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_401_UNAUTHORIZED, content_type='application/json; charset=utf-8')
         request.user.delete()
         return Response({
             "message": "帳號已成功刪除",
             "data": None
-        }, status=status.HTTP_204_NO_CONTENT,content_type='application/json; charset=utf-8')
+        }, status=status.HTTP_204_NO_CONTENT, content_type='application/json; charset=utf-8')
+
 
 # -----------------------------
 # 用戶資料
@@ -378,7 +384,7 @@ class UserDetail(APIView):
         return Response({
             "message": "用戶資料取得成功",
             "data": serializer.data
-        }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
+        }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
 
     def put(self, request):
         new_name = request.data.get("new_name", "").strip()
@@ -386,15 +392,15 @@ class UserDetail(APIView):
             return Response({
                 "message": "缺少必要參數",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
         serializer = UserDetailSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "message": "用戶資料更新成功",
                 "data": serializer.data
-            }, status=status.HTTP_200_OK,content_type='application/json; charset=utf-8')
+            }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
         return Response({
             "message": "資料驗證失敗",
             "data": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST,content_type='application/json; charset=utf-8')
+        }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')

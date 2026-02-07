@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from .models import Conversation, Message
 
+
 class ConversationListSerializer(serializers.ModelSerializer):
-    """用於 /chat/conversations/all/ 端點的簡化序列化器"""
+    """用於 GET /chat/conversations/all/ 端點的簡化序列化器"""
     conversation_id = serializers.IntegerField(source='id', read_only=True)
     first_user_question = serializers.SerializerMethodField()
     count = serializers.SerializerMethodField()
@@ -24,7 +25,8 @@ class ConversationListSerializer(serializers.ModelSerializer):
 
 
 class MessageListSerializer(serializers.ModelSerializer):
-    """用於取得特定對話訊息的簡化序列化器"""
+    """用於 POST /chat/conversation/ 端點的簡化序列化器"""
+
     class Meta:
         model = Message
         fields = ["text", "is_user"]

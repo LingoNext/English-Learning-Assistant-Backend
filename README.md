@@ -18,18 +18,17 @@
 |     `/chat/conversations/`      |   建立新對話    |  POST  |           text, is_user            |                                 -                                  |   201, 400, 401    | 需攜帶 access_token |
 |     `/chat/conversations/`      |    刪除對話    | DELETE |          conversation_id           |                                 -                                  |   204, 401, 404    | 需攜帶 access_token |
 |        `/chat/messages/`        |   建立新訊息    |  POST  |   conversation_id, text, is_user   |                                 -                                  | 201, 400, 401, 404 | 需攜帶 access_token |
-> status 500 為伺服器錯誤，通常不會特別列在表格中，但在實作時仍需處理此類錯誤情況
 
 ### 表格2：簡化序列化器規格表
-|            序列化器名稱             |                          欄位名稱                           |                  說明                  |
-|:-----------------------------:|:-------------------------------------------------------:|:------------------------------------:|
-|  ConversationListSerializer   | conversation_id, first_user_question, count, updated_at |                返回對話列表                |
-|     MessageListSerializer     |                      text, is_user                      |            用於取得特定對話的訊息列表             |
-|      UserLoginSerializer      |                     email, password                     |              用戶登入時的資料驗證              |
-| RegistrationConfirmSerializer |           email, password, verification_code            |              註冊確認時的資料驗證              |
-|     UserDetailSerializer      |                  email, name, new_name                  |              用戶資料的取得和更新              |
-|    DeleteAccountSerializer    |                        password                         |             永久刪除帳號時的密碼驗證             |
 
+|            序列化器名稱             |                          欄位名稱                           |      說明       |
+|:-----------------------------:|:-------------------------------------------------------:|:-------------:|
+|  ConversationListSerializer   | conversation_id, first_user_question, count, updated_at |    返回對話列表     |
+|     MessageListSerializer     |                      text, is_user                      | 用於取得特定對話的訊息列表 |
+|      UserLoginSerializer      |                     email, password                     |  用戶登入時的資料驗證   |
+| RegistrationConfirmSerializer |           email, password, verification_code            |  註冊確認時的資料驗證   |
+|     UserDetailSerializer      |                  email, name, new_name                  |  用戶資料的取得和更新   |
+|    DeleteAccountSerializer    |                        password                         | 永久刪除帳號時的密碼驗證  |
 
 ### 表格3：資料欄位規格表
 
@@ -78,13 +77,17 @@
 ## 備註
 
 1. **身份驗證**: 使用 Simple JWT，登入後驗證請求標頭中包含 `Authorization: Bearer <token>`
-2. **時間格式**: 所有時間欄位均使用 ISO 8601 格式 (例: `2025-08-08T10:30:00Z`)以利資料一致性與排序，但前端可以根據需要轉換為其他格式（如 yyyy/mm/dd）
+2. **時間格式**: 所有時間欄位均使用 ISO 8601 格式 (例: `2025-08-08T10:30:00Z`)以利資料一致性與排序，但前端可以根據需要轉換為其他格式（如
+   yyyy/mm/dd）
 3. **字元編碼**: 所有文字內容均使用 UTF-8 編碼`charset=utf-8`，不然前端 flutter 收到 Response 的 message 有中文會變成亂碼
 4. **內容類型**: 除圖片外，所有請求和回應均使用 `application/json` 格式
 5. **電子郵件驗證**: 系統會寄送一次性驗證碼至用戶電子郵件，使用者需在註冊或重設密碼時提供此驗證碼，有效期為五分鐘
-6. **Token 生命週期**: Access Token 會在 1 小時後過期，Refresh Token 會在 7 天後過期。登出時前端丟棄兩個 Token 就好
-7. **請求速率限制**: 為防止濫用，系統對每個用戶 IP 限制驗證碼間隔 10 秒發送且 1 小時內最多 5 次
-8. **Response 格式**: 所有 API 的回應均使用統一的格式，包含 `status`(由 HttpResponse 狀態碼決定)、`message` 和 `data`(若需要回傳資料)
-9. **錯誤處理**: API 在遇到錯誤時會回傳適當的 HTTP 狀態碼和錯誤訊息，前端應根據狀態碼進行相應處理
-10. **跨域資源共享 (CORS)**: API 支援跨域請求，只允許來自特定網域的前端應用程式存取，防止跨站請求偽造 (CSRF) 攻擊
-11. **分頁**: 對於可能返回大量資料的端點（如取得對話列表），支援分頁查詢，預設每頁返回 10 筆資料(未來擴充，可以不做)
+6. **郵件防刷機制**: 為防止濫用，系統對每個電子郵件地址限制驗證碼間隔 1 分鐘發送且 1 小時內最多 5 次
+7. **郵件附帶請求 IP**: 郵件內容中附帶用戶的請求 IP 位址以增強安全性，這在安全、風控、用戶信任上都加分
+8. **Token 生命週期**: Access Token 會在 1 小時後過期，Refresh Token 會在 7 天後過期。登出時前端丟棄兩個 Token 就好
+9. **Response 格式**: 所有 API 的回應均使用統一的格式，包含 `status`(由 HttpResponse 狀態碼決定)、`message` 和 `data`(
+   若需要回傳資料)
+10. **錯誤處理**: API 在遇到錯誤時會回傳適當的 HTTP 狀態碼和錯誤訊息，前端應根據狀態碼進行相應處理
+11. **跨域資源共享 (CORS)**: API 支援跨域請求，只允許來自特定網域的前端應用程式存取，防止跨站請求偽造 (CSRF) 攻擊
+12. **分頁**: 對於可能返回大量資料的端點（如取得對話列表），支援分頁查詢，預設每頁返回 10 筆資料(未來擴充，可以不做)
+13. **status 500**: 為伺服器錯誤，通常不會特別列在表格中，但在實作時仍需處理此類錯誤情況
