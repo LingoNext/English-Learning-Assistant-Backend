@@ -15,12 +15,16 @@ from .serializers import (
 )
 from django.conf import settings
 from .rate_limiter import (
-    email_rate_limit,
-    get_client_ip
+    email_rate_limit_v2,
+    general_rate_limit,
+    get_client_ip,
+    get_device_id_from_request,
+    get_or_create_device_id
 )
 import requests
 import secrets
 import hashlib
+from datetime import datetime
 
 User = get_user_model()
 
@@ -34,7 +38,7 @@ class SendVerificationCode(APIView):
     """
     permission_classes = [AllowAny]
 
-    @email_rate_limit
+    @email_rate_limit_v2
     def post(self, request):
         # 從請求取得 email
         email = request.data.get('email')
@@ -42,7 +46,10 @@ class SendVerificationCode(APIView):
 
         # 記錄客戶端 IP 用於日誌
         client_ip = get_client_ip(request)
-        print(f"Verification code requested for {email} from IP {client_ip}")
+        device_id = get_device_id_from_request(request)
+        device_fingerprint = get_or_create_device_id(request)
+
+        print(f"Verification code requested for {email} from IP {client_ip}, Device ID: {device_id}")
 
         if not email or not purpose:
             return Response({"message": "缺少必要參數", "data": None}, status=status.HTTP_400_BAD_REQUEST,
@@ -71,6 +78,20 @@ class SendVerificationCode(APIView):
 
         subject = "帳號驗證碼通知"
 
+        # 獲取裝置信息用於安全資訊
+        user_agent = request.META.get('HTTP_USER_AGENT', '未知裝置')
+        device_type = "行動裝置" if any(mobile in user_agent.lower() for mobile in ['mobile', 'android', 'iphone', 'ipad']) else "桌面裝置"
+
+        # 簡化裝置資訊顯示
+        device_info = f"裝置類型：{device_type}"
+        if device_id:
+            device_info += f"\n裝置 ID：{device_id[:8]}****"  # 只顯示前8位，保護隱私
+        else:
+            device_info += f"\n裝置指紋：{device_fingerprint[:8]}****"
+
+        # 獲取當前時間
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         message = f"""
         您好，
         我們收到一筆帳號{action}請求，以下為您的驗證碼：
@@ -85,6 +106,8 @@ class SendVerificationCode(APIView):
 
         【安全資訊】
         請求來源 IP：{client_ip}
+        {device_info}
+        請求時間：{current_time}
         若您未曾進行此操作，請忽略此郵件，將不會受到影響。
 
         —
@@ -130,6 +153,7 @@ class RegistrationConfirm(APIView):
     """
     permission_classes = [AllowAny]
 
+    @general_rate_limit(max_requests=10, time_window=300, action_type='registration_confirm')  # 5分鐘內最多10次註冊嘗試
     def post(self, request):
         serializer = RegistrationConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -185,6 +209,7 @@ class LoginView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @general_rate_limit(max_requests=5, time_window=300, action_type='login')  # 5分鐘內最多5次登入嘗試
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -293,6 +318,7 @@ class PasswordResetConfirmView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @general_rate_limit(max_requests=3, time_window=600, action_type='password_reset')  # 10分鐘內最多3次密碼重置嘗試
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
