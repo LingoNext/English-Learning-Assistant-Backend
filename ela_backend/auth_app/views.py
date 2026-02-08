@@ -24,7 +24,6 @@ from .rate_limiter import (
 import requests
 import secrets
 import hashlib
-from datetime import datetime
 
 User = get_user_model()
 
@@ -85,12 +84,9 @@ class SendVerificationCode(APIView):
         # 簡化裝置資訊顯示
         device_info = f"裝置類型：{device_type}"
         if device_id:
-            device_info += f"\n裝置 ID：{device_id[:8]}****"  # 只顯示前8位，保護隱私
+            device_info += f"\n        裝置 ID：{device_id[:8]}****"  # 只顯示前8位，保護隱私
         else:
-            device_info += f"\n裝置指紋：{device_fingerprint[:8]}****"
-
-        # 獲取當前時間
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            device_info += f"\n        裝置指紋：{device_fingerprint[:8]}****"
 
         message = f"""
         您好，
@@ -107,10 +103,9 @@ class SendVerificationCode(APIView):
         【安全資訊】
         請求來源 IP：{client_ip}
         {device_info}
-        請求時間：{current_time}
         若您未曾進行此操作，請忽略此郵件，將不會受到影響。
 
-        —
+        ———
         英語學習小幫手 APP
         開發團隊：LingoNext
 
