@@ -14,8 +14,14 @@ SECRET_KEY = os.getenv("SECRET_KEY", 'django-insecure-n(fc)j3oolawouvvm=zs5dw4z1
 
 DEBUG = False
 
-# .onreder.com 之後要移除，請統一用 api.tonixiang.me，防止攻擊者可能註冊類似的子域名進行攻擊
-ALLOWED_HOSTS = ['.onrender.com', 'api.tonixiang.me']
+# 防止攻擊者可能註冊類似的子域名進行攻擊
+ALLOWED_HOSTS = ['api.tonixiang.me']
+
+SECURE_SSL_REDIRECT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
 
 APPEND_SLASH = True
 
@@ -69,7 +75,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv("DB_NAME", 'ela_backend'),
         'USER': os.getenv("DB_USER", 'postgres'),
-        'PASSWORD': os.getenv("DB_PASSWORD", 'C@t-Coffee89!'),
+        'PASSWORD': os.getenv("DB_PASSWORD", 'C@t-Coffee89!'),  # 硬編碼敏感資料
         'HOST': os.getenv("DB_HOST", 'localhost'),
         'PORT': '5432',
     }

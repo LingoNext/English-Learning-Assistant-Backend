@@ -6,6 +6,7 @@ from django.core.cache import cache
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth.hashers import make_password
 from .serializers import (
     UserLoginSerializer,
@@ -367,6 +368,7 @@ class DeleteAccount(APIView):
     POST /auth/delete_account/ - 永久刪除帳號
     """
     permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
     def post(self, request):
         serializer = DeleteAccountSerializer(data=request.data)
@@ -399,6 +401,7 @@ class UserDetail(APIView):
     PUT /auth/user/ - 更新用戶資料
     """
     permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
     def get(self, request):
         serializer = UserDetailSerializer(request.user)

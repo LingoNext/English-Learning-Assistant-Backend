@@ -6,4 +6,4 @@ setuptools==81.0.0
 psycopg[binary]>=3.1.18
 python-dotenv==1.2.1
 gunicorn==25.0.2
-requests>=2.31.0
+requests>=2.32.4
