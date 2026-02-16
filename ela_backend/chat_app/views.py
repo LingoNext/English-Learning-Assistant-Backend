@@ -1,7 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from .models import Conversation, Message
 from .serializers import ConversationListSerializer, MessageListSerializer
@@ -83,7 +82,7 @@ class ConversationView(APIView):
 
         return Response({
             "message": "對話建立成功",
-            "data": None
+            "data": {"conversation_id": conversation.id}
         }, status=status.HTTP_201_CREATED, content_type='application/json; charset=utf-8')
 
     def delete(self, request):
@@ -129,7 +128,7 @@ class MessageView(APIView):
 
         # 驗證對話是否存在且屬於當前用戶
         try:
-            conversation = Conversation.objects.get(id=conversation_id, user=request.user.is_authenticated)
+            conversation = Conversation.objects.get(id=conversation_id, user=request.user)
         except Conversation.DoesNotExist:
             return Response({
                 "message": "對話不存在或無權限",
