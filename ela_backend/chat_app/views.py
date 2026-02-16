@@ -12,7 +12,6 @@ class ConversationAllView(APIView):
     GET /chat/conversations/all/ - 取得對話列表
     """
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def get(self, request):
         """取得對話列表"""
@@ -29,7 +28,6 @@ class ConversationDetailView(APIView):
     POST /chat/conversation/ - 取得特定對話的訊息
     """
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def post(self, request):
         """取得特定對話的訊息"""
@@ -61,7 +59,6 @@ class ConversationView(APIView):
     DELETE /chat/conversations/ - 刪除對話
     """
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def post(self, request):
         """建立新對話（同時建立第一則訊息）"""
@@ -117,7 +114,6 @@ class MessageView(APIView):
     POST /chat/messages/ - 建立新訊息
     """
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def post(self, request):
         """建立新訊息"""
@@ -133,7 +129,7 @@ class MessageView(APIView):
 
         # 驗證對話是否存在且屬於當前用戶
         try:
-            conversation = Conversation.objects.get(id=conversation_id, user=request.user)
+            conversation = Conversation.objects.get(id=conversation_id, user=request.user.is_authenticated)
         except Conversation.DoesNotExist:
             return Response({
                 "message": "對話不存在或無權限",

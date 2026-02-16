@@ -80,7 +80,8 @@ class SendVerificationCode(APIView):
 
         # 獲取裝置信息用於安全資訊
         user_agent = request.META.get('HTTP_USER_AGENT', '未知裝置')
-        device_type = "行動裝置" if any(mobile in user_agent.lower() for mobile in ['mobile', 'android', 'iphone', 'ipad']) else "桌面裝置"
+        device_type = "行動裝置" if any(
+            mobile in user_agent.lower() for mobile in ['mobile', 'android', 'iphone', 'ipad']) else "桌面裝置"
 
         # 簡化裝置資訊顯示
         device_info = f"裝置類型：{device_type}"
@@ -368,7 +369,6 @@ class DeleteAccount(APIView):
     POST /auth/delete_account/ - 永久刪除帳號
     """
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def post(self, request):
         serializer = DeleteAccountSerializer(data=request.data)
@@ -401,7 +401,6 @@ class UserDetail(APIView):
     PUT /auth/user/ - 更新用戶資料
     """
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def get(self, request):
         serializer = UserDetailSerializer(request.user)
