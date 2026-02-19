@@ -170,3 +170,9 @@ CACHES = {
         }
     }
 }
+
+# Inference provider configuration
+NOVITA_API_KEY = os.getenv("NOVITA_API_KEY", "")
+NOVITA_API_URL = "https://router.huggingface.co/v1/chat/completions"
+NOVITA_MODEL_ID = "Qwen/Qwen3-VL-8B-Instruct:novita"
+NOVITA_REQUEST_TIMEOUT = 120
