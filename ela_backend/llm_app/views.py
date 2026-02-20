@@ -13,7 +13,9 @@ from .serializers import (
 
 
 class VisualView(APIView):
-    """ POST /llm/analyze/ - 接收圖片並返回雙語的影像學習內容 """
+    """
+    POST /llm/analyze/ - 接收圖片並返回雙語的影像學習內容
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -46,7 +48,9 @@ class VisualView(APIView):
 
 
 class ChatView(APIView):
-    """ POST /llm/chat/ - 以對話形式與模型互動，並可選擇是否啟用語法分析 """
+    """
+    POST /llm/chat/ - 以對話形式與模型互動，並可選擇是否啟用語法分析
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -114,7 +118,9 @@ class ChatView(APIView):
 
 
 class VocabView(APIView):
-    """ POST /llm/vocab/ - 單字解析 """
+    """
+    POST /llm/vocab/ - 單字解析
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
