@@ -18,7 +18,7 @@
 |     `/chat/conversations/`      |   建立新對話    |  POST  |           { text, is_user }            |                             { conversation_id }                              |   201, 400, 401    | 需要驗證 |
 |     `/chat/conversations/`      |    刪除對話    | DELETE |          { conversation_id }           |                                      -                                       |   204, 401, 404    | 需要驗證 |
 |        `/chat/messages/`        |   建立新訊息    |  POST  |   { conversation_id, text, is_user }   |                                      -                                       | 201, 400, 401, 404 | 需要驗證 |
-|         `llm/analyze/`          |    分析影像    |  POST  |           { image (base64) }           | Array<{word,translation,pronunciation,definition}>, Array<{english,chinese}> |   200, 400, 401    |      |
+|         `llm/analyze/`          |    分析影像    |  POST  |           { image (base64) }           | Array<{word_en,word_zh,pos}>, Array<{english,chinese}> |   200, 400, 401    |      |
 |          `llm/vocab/`           |    詞彙分析    |  POST  |               {  word }                |      { word,ipa,pos,meaning_en,meaning_zh,example_en,example_zh,error }      |   200, 400, 401    |      |
 |           `llm/chat/`           |    聊天對話    |  POST  |                   未定                   |                                      未定                                      |   200, 400, 401    |      |
 

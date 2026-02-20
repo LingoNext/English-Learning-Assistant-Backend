@@ -52,7 +52,7 @@ class VisualView(APIView):
         }
 
         serializer = VisualAnalysisSerializer(response_data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, content_type='application/json; charset=utf-8')
+        return Response(serializer.data, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
 
 
 class ChatView(APIView):

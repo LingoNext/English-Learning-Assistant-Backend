@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'auth_app',
     'chat_app',
+    'llm_app',
 ]
 
 MIDDLEWARE = [

@@ -3,10 +3,9 @@ from rest_framework import serializers
 
 class VocabularyItemSerializer(serializers.Serializer):
     """單詞項目序列化器"""
-    word = serializers.CharField()
-    translation = serializers.CharField()
-    pronunciation = serializers.CharField(required=False, allow_blank=True)
-    definition = serializers.CharField(required=False, allow_blank=True)
+    word_en = serializers.CharField()
+    word_zh = serializers.CharField()
+    pos = serializers.CharField(required=False, allow_blank=True)
 
 
 class SentenceItemSerializer(serializers.Serializer):
