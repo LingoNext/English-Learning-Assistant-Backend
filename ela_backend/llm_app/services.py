@@ -7,6 +7,17 @@ from django.conf import settings
 from huggingface_hub import InferenceClient
 
 
+def _estimate_token_count(text: str) -> int:
+    """Rough estimate of token count for text (1 token ≈ 4 chars for most text)"""
+    return len(text) // 4
+
+
+def _calculate_conversation_tokens(messages: List[Dict[str, str]]) -> int:
+    """Calculate total estimated tokens in a conversation"""
+    total_chars = sum(len(msg.get("content", "")) for msg in messages)
+    return _estimate_token_count(str(total_chars))
+
+
 @dataclass
 class NovitaQwenClient:
     api_key: str
@@ -87,22 +98,9 @@ class NovitaQwenClient:
 
     def build_messages(self, data_uri: str) -> tuple[str, List[Dict[str, Any]]]:
         prompt = (
-            "You are an AR language tutor. Respond with STRICT JSON ONLY.\n"
-            "No extra text, no markdown.\n"
-            "Detect EXACTLY 2 OR 3 prominent visible objects "
-            "(concrete physical nouns, not background or abstract concepts).\n"
-            "OUTPUT STRUCTURE:\n"
-            "{\n"
-            "  \"vocabulary\": [ {\"word_en\": \"\", \"word_zh\": \"Traditional Chinese\", \"pos\": \"noun\"} ],\n"
-            "  \"sentences\": [ {\"english\": \"\", \"chinese\": \"Traditional Chinese\"} ],\n"
-            "}\n"
-            "STRICT RULES:\n"
-            "- vocabulary length MUST be exactly 2 or 3\n"
-            "- sentences length MUST equal vocabulary length\n"
-            "- Each chinese translation MUST be in Traditional Chinese\n"
-            "- Each sentence MUST use EXACTLY ONE vocabulary word\n"
-            "- Do NOT introduce new nouns\n"
-            "- Output valid JSON only"
+            "AR tutor. JSON only. Find 2-3 objects:\n"
+            "{\"vocabulary\":[{\"word_en\":\"\",\"word_zh\":\"Traditional Chinese\",\"pos\":\"noun\"}],\"sentences\":[{\"english\":\"\",\"chinese\":\"Traditional Chinese\"}]}\n"
+            "Rules: Each chinese translation MUST be in traditional chinese, vocabulary=2-3 items, sentences=same count, use each word once"
         )
         messages = [
             {"role": "system", "content": prompt},
@@ -173,66 +171,100 @@ class NovitaQwenClient:
             self,
             conversation: List[Dict[str, str]],
             analysis_enabled: bool,
-            input_language: str,
+            max_context_tokens: int = 1500,
     ) -> List[Dict[str, Any]]:
+        # Check if conversation is too long and needs summarization
+        conversation_tokens = _calculate_conversation_tokens(conversation)
+
+        if conversation_tokens > max_context_tokens and len(conversation) > 6:
+            # Keep the last few messages and summarize the rest
+            recent_messages = conversation[-4:]  # Keep last 4 messages for context
+            older_messages = conversation[:-4]
+
+            if older_messages:
+                summary = self._summarize_conversation(older_messages)
+                # Create summarized conversation
+                conversation = [
+                                   {"role": "system", "content": f"Previous conversation summary: {summary}"}
+                               ] + recent_messages
+
         if analysis_enabled:
+
             prompt = (
-                "You are an English tutor. Always respond in English."
-                "Keep replies concise (1-2 sentences)."
-                f"Input language: {input_language}."
-                "Return STRICT JSON with keys:"
-                "reply: string"
-                "input_language: one of \"en\", \"zh\""
-                "user_grammar: object or null"
-                "assistant_grammar: object"
-                "Rules:"
-                "1.If input_language != \"en\", user_grammar must be null."
-                "2.If input_language == \"en\", user_grammar must be an object even if correct."
-                "3.user_grammar keys: is_correct (bool), corrected_text (string), errors (list), explanation (string)."
-                "4.If correct, set is_correct true and corrected_text empty."
-                "5.If incorrect, set is_correct false and provide corrected_text and errors."
-                "6.assistant_grammar keys: summary (string), structures (list of 1-3 items)."
-                "7.No extra text, no markdown, no code fences."
+                "English tutor. JSON only.\n"
+                "Format:\n"
+                "{\n"
+                "  \"reply\": \"1-2 sentences, no repeat\",\n"
+                "  \"user_grammar\": {\n"
+                "    \"is_correct\": bool,\n"
+                "    \"corrected_text\": \"if wrong\",\n"
+                "    \"errors\": [\"list\"],\n"
+                "    \"explanation\": \"Traditional Chinese\"\n"
+                "  },\n"
+                "  \"grammar_structure\": {\n"
+                "    \"type\": \"structure type\",\n"
+                "    \"description\": \"brief desc\",\n"
+                "    \"example\": \"optional\"\n"
+                "  }\n"
+                "}\n"
+                "Analyze user's last message only."
             )
         else:
             prompt = (
-                "You are an English tutor. Always respond in English."
-                "Keep replies concise (1-2 sentences)."
-                "Return STRICT JSON with keys:"
-                "reply: string"
-                "No extra text, no markdown, no code fences."
-            )
-
+                "English tutor. JSON only:\n"
+                "{\"reply\": \"Natural response, don't repeat user input\"}\n"
+                "1-2 sentences max.")
         messages: List[Dict[str, Any]] = [{"role": "system", "content": prompt}]
         messages.extend(conversation)
         return messages
 
+    def _summarize_conversation(self, messages: List[Dict[str, str]]) -> str:
+        """Summarize a conversation to reduce token usage"""
+        if not messages:
+            return ""
+
+        # Build prompt for summarization
+        conversation_text = ""
+        for msg in messages:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            conversation_text += f"{role}: {content}\n"
+
+        summary_prompt = [
+            {
+                "role": "system",
+                "content": "Summarize in 2-3 sentences. Focus on main topics and learning points."
+            },
+            {
+                "role": "user",
+                "content": f"Summarize:\n{conversation_text}"
+            }
+        ]
+
+        try:
+            payload = {
+                "messages": summary_prompt,
+                "max_tokens": 150,
+                "temperature": 0.3,
+            }
+            response = self.post(payload)
+            summary = self.extract_text(response)
+            return summary.strip()
+        except Exception:
+            # Fallback: simple truncation if summarization fails
+            return "Previous conversation about English learning topics."
+
     def build_vocab_messages(self, word: str) -> List[Dict[str, Any]]:
         prompt = (
-            "You are an English tutor. Return STRICT JSON with keys:\n"
-            "word: string\n"
-            "ipa: string\n"
-            "pos: string\n"
-            "meaning_en: string\n"
-            "meaning_zh: string (Traditional Chinese)\n"
-            "example_en: string\n"
-            "example_zh: string (Traditional Chinese)\n"
-            "error: string or empty\n"
-            "No extra text, no markdown, no code fences."
+            "English tutor. JSON only:\n"
+            "{\"word\":\"\",\"ipa\":\"\",\"pos\":\"\",\"meaning_en\":\"\",\"meaning_zh\":\"Traditional Chinese\",\"example_en\":\"\",\"example_zh\":\"Traditional Chinese\",\"error\":\"\"}"
+            "Rules: Each chinese translation MUST be in traditional chinese"
         )
-        user_instruction = f"Analyze the English word: {word}"
+        user_instruction = f"Analyze: {word}"
         return [
             {"role": "system", "content": prompt},
             {"role": "user", "content": user_instruction},
         ]
-
-    @staticmethod
-    def detect_language(text: str) -> str:
-        if re.search(r"[\u4E00-\u9FFF]", text):
-            return "zh"
-        if re.search(r"[A-Za-z]", text):
-            return "en"
-        return "other"
 
 
 def get_novita_client() -> NovitaQwenClient:

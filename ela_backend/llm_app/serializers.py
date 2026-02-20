@@ -20,13 +20,6 @@ class VisualAnalysisSerializer(serializers.Serializer):
     sentences = SentenceItemSerializer(many=True, required=False, allow_empty=True)
 
 
-class GrammarErrorSerializer(serializers.Serializer):
-    """語法錯誤序列化器"""
-    error = serializers.CharField()
-    correction = serializers.CharField(required=False, allow_blank=True)
-    explanation = serializers.CharField(required=False, allow_blank=True)
-
-
 class UserGrammarSerializer(serializers.Serializer):
     """用戶語法分析序列化器"""
     is_correct = serializers.BooleanField()
@@ -45,21 +38,11 @@ class GrammarStructureSerializer(serializers.Serializer):
     description = serializers.CharField()
     example = serializers.CharField(required=False, allow_blank=True)
 
-
-class AssistantGrammarSerializer(serializers.Serializer):
-    """助手語法分析序列化器"""
-    summary = serializers.CharField()
-    structures = GrammarStructureSerializer(many=True, required=False, allow_empty=True)
-
-
 class ChatResponseSerializer(serializers.Serializer):
     """對話響應序列化器"""
     reply = serializers.CharField()
-    input_language = serializers.CharField()
     user_grammar = UserGrammarSerializer(required=False, allow_null=True)
-    assistant_grammar = AssistantGrammarSerializer(required=False, allow_null=True)
-    raw_text = serializers.CharField(required=False, allow_blank=True)
-
+    grammar_structure = GrammarStructureSerializer(required=False, allow_null=True)
 
 class VocabResponseSerializer(serializers.Serializer):
     """單詞解析響應序列化器"""

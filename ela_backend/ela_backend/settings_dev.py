@@ -1,6 +1,5 @@
 from .settings import *
 
-# Override database settings for development
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
