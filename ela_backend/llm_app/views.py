@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .services import get_novita_client
+from rest_framework.permissions import AllowAny
 from .serializers import (
     VisualAnalysisSerializer,
     ChatResponseSerializer,
@@ -24,7 +25,7 @@ def _trim_reply(text: str) -> str:
 
 class VisualView(APIView):
     """ POST /llm/analyze/ - 接收圖片並返回雙語 AR 學習內容 """
-
+    permission_classes = [AllowAny]
     def post(self, request):
         image = request.FILES.get("image")
         if not image:
@@ -56,7 +57,7 @@ class VisualView(APIView):
 
 class ChatView(APIView):
     """ POST /llm/chat/ - 以對話形式與模型互動，並可選擇是否啟用語法分析 """
-
+    permission_classes = [AllowAny]
     def post(self, request):
         messages = request.data.get("messages")
         analysis_enabled = bool(request.data.get("analysis_enabled", False))
@@ -146,7 +147,7 @@ class ChatView(APIView):
 
 class VocabView(APIView):
     """ POST /llm/vocab/ - 單字解析 """
-
+    permission_classes = [AllowAny]
     def post(self, request):
         word = request.data.get("word")
         if not word:
