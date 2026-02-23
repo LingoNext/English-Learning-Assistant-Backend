@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 from django.conf import settings
 from huggingface_hub import InferenceClient
+from io import BytesIO
+from PIL import Image, ImageOps
 
 
 def _estimate_token_count(text: str) -> int:
@@ -277,3 +279,63 @@ def get_novita_client() -> NovitaQwenClient:
         model_id=settings.NOVITA_MODEL_ID,
         timeout=settings.NOVITA_REQUEST_TIMEOUT,
     )
+
+
+class ImageCompressor:
+    """"限制圖片大小的工具，確保上傳的圖片不會超過指定的檔案大小和像素數"""
+    def compress_image_file(file_obj, target_width, max_bytes=2 * 1024 * 1024,max_pixels=2_000_000) -> bytes:
+        file_obj.seek(0)
+        img_bytes = file_obj.read()
+
+        # 已經夠小就直接回傳
+        if len(img_bytes) <= max_bytes:
+            return img_bytes
+
+        img = Image.open(BytesIO(img_bytes))
+        img = ImageOps.exif_transpose(img)
+
+        # 限制最大像素數
+        pixels = img.width * img.height
+        if pixels > max_pixels:
+            scale = (max_pixels / pixels) ** 0.5
+            img = img.resize(
+                (int(img.width * scale), int(img.height * scale)),
+                Image.LANCZOS
+            )
+
+        # 固定寬度（若指定）
+        if target_width and img.width > target_width:
+            ratio = target_width / img.width
+            img = img.resize(
+                (target_width, int(img.height * ratio)),
+                Image.LANCZOS
+            )
+
+        # 處理 alpha
+        if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+            bg = Image.new("RGB", img.size, (255, 255, 255))
+            bg.paste(img, mask=img.split()[-1])
+            img = bg
+        else:
+            img = img.convert("RGB")
+
+        out = BytesIO()
+        resize_steps = [1.0, 0.9, 0.8, 0.7, 0.6]
+
+        for step in resize_steps:
+            if step != 1.0:
+                img = img.resize(
+                    (int(img.width * step), int(img.height * step)),
+                    Image.LANCZOS
+                )
+
+            for quality in range(90, 25, -10):
+                out.seek(0)
+                out.truncate(0)
+                img.save(out, "JPEG", quality=quality, optimize=True)
+
+                if out.tell() <= max_bytes:
+                    return out.getvalue()
+
+        # 最後 fallback（一定回傳）
+        return out.getvalue()

@@ -2,12 +2,13 @@ from typing import Any, Dict, List
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .services import get_novita_client, _calculate_conversation_tokens
+from .services import get_novita_client, _calculate_conversation_tokens, ImageCompressor
 from rest_framework.permissions import AllowAny
 from .serializers import VisualAnalysisSerializer, ChatResponseSerializer, VocabResponseSerializer
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class VisualView(APIView):
     """
@@ -20,10 +21,11 @@ class VisualView(APIView):
         if not image:
             return Response({"message": "缺少必要參數"}, status=status.HTTP_400_BAD_REQUEST,
                             content_type='application/json; charset=utf-8')
-
         try:
             client = get_novita_client()
-            inference = client.analyze_image(image.read())
+            compose_image = ImageCompressor.compress_image_file(image, 1 * 1024 * 1024)
+            #print(f"before compression: {image.size} bytes, after compression: {len(compose_image)} bytes")
+            inference = client.analyze_image(compose_image)
         except Exception as e:
             logger.exception("Error during image analysis: %s", str(e))
             return Response({"message": "AI 服務暫時無法使用，請稍後再試"}, status=status.HTTP_502_BAD_GATEWAY,
@@ -68,7 +70,7 @@ class ChatView(APIView):
 
         last_user = next((m["content"] for m in reversed(conversation) if m["role"] == "user"), "")
         if not last_user:
-            return Response({"message":"缺少必要參數"}, status=status.HTTP_400_BAD_REQUEST,
+            return Response({"message": "缺少必要參數"}, status=status.HTTP_400_BAD_REQUEST,
                             content_type='application/json; charset=utf-8')
 
         # Calculate original conversation token count
@@ -80,7 +82,7 @@ class ChatView(APIView):
             inference = client.analyze_text(prompt_messages)
         except Exception as e:
             logger.exception("Error during chat analysis: %s", str(e))
-            return Response({"message":"AI 服務暫時無法使用，請稍後再試"}, status=status.HTTP_502_BAD_GATEWAY,
+            return Response({"message": "AI 服務暫時無法使用，請稍後再試"}, status=status.HTTP_502_BAD_GATEWAY,
                             content_type='application/json; charset=utf-8')
 
         parsed: Dict[str, Any] = inference.get("parsed") or {}
@@ -121,7 +123,7 @@ class VocabView(APIView):
     def post(self, request):
         word = request.data.get("word")
         if not word:
-            return Response({"message":"缺少必要參數"}, status=status.HTTP_400_BAD_REQUEST,
+            return Response({"message": "缺少必要參數"}, status=status.HTTP_400_BAD_REQUEST,
                             content_type='application/json; charset=utf-8')
         try:
             client = get_novita_client()
@@ -129,7 +131,7 @@ class VocabView(APIView):
             inference = client.analyze_text(prompt_messages)
         except Exception as e:
             logger.exception("Error during vocab analysis: %s", str(e))
-            return Response({"message":"AI 服務暫時無法使用，請稍後再試"}, status=status.HTTP_502_BAD_GATEWAY,
+            return Response({"message": "AI 服務暫時無法使用，請稍後再試"}, status=status.HTTP_502_BAD_GATEWAY,
                             content_type='application/json; charset=utf-8')
 
         parsed: Dict[str, Any] = inference.get("parsed") or {}
