@@ -4,13 +4,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .services import get_novita_client, _calculate_conversation_tokens
 from rest_framework.permissions import AllowAny
-from .serializers import (
-    VisualAnalysisSerializer,
-    ChatResponseSerializer,
-    VocabResponseSerializer,
-    ErrorResponseSerializer
-)
+from .serializers import VisualAnalysisSerializer, ChatResponseSerializer, VocabResponseSerializer
+import logging
 
+logger = logging.getLogger(__name__)
 
 class VisualView(APIView):
     """
@@ -21,16 +18,15 @@ class VisualView(APIView):
     def post(self, request):
         image = request.FILES.get("image")
         if not image:
-            error_serializer = ErrorResponseSerializer({"message": "缺少必要參數"})
-            return Response(error_serializer.data, status=status.HTTP_400_BAD_REQUEST,
+            return Response({"message": "缺少必要參數"}, status=status.HTTP_400_BAD_REQUEST,
                             content_type='application/json; charset=utf-8')
 
         try:
             client = get_novita_client()
             inference = client.analyze_image(image.read())
         except Exception as e:
-            error_serializer = ErrorResponseSerializer({"message": str(e)})
-            return Response(error_serializer.data, status=status.HTTP_502_BAD_GATEWAY,
+            logger.exception("Error during image analysis: %s", str(e))
+            return Response({"message": "AI 服務暫時無法使用，請稍後再試"}, status=status.HTTP_502_BAD_GATEWAY,
                             content_type='application/json; charset=utf-8')
 
         parsed: Dict[str, Any] = inference.get("parsed") or {}
@@ -72,8 +68,7 @@ class ChatView(APIView):
 
         last_user = next((m["content"] for m in reversed(conversation) if m["role"] == "user"), "")
         if not last_user:
-            error_serializer = ErrorResponseSerializer({"message": "at least one user message is required."})
-            return Response(error_serializer.data, status=status.HTTP_400_BAD_REQUEST,
+            return Response({"message":"缺少必要參數"}, status=status.HTTP_400_BAD_REQUEST,
                             content_type='application/json; charset=utf-8')
 
         # Calculate original conversation token count
@@ -84,13 +79,13 @@ class ChatView(APIView):
             prompt_messages = client.build_chat_messages(conversation, analysis_enabled, original_tokens)
             inference = client.analyze_text(prompt_messages)
         except Exception as e:
-            error_serializer = ErrorResponseSerializer({"message": str(e)})
-            return Response(error_serializer.data, status=status.HTTP_502_BAD_GATEWAY,
+            logger.exception("Error during chat analysis: %s", str(e))
+            return Response({"message":"AI 服務暫時無法使用，請稍後再試"}, status=status.HTTP_502_BAD_GATEWAY,
                             content_type='application/json; charset=utf-8')
 
         parsed: Dict[str, Any] = inference.get("parsed") or {}
         user_grammar = parsed.get("user_grammar") if isinstance(parsed, dict) else None
-        grammar_structure= parsed.get("grammar_structure") if isinstance(parsed, dict) else None
+        grammar_structure = parsed.get("grammar_structure") if isinstance(parsed, dict) else None
         reply = parsed.get("reply") if isinstance(parsed, dict) else None
         if not isinstance(reply, str) or not reply.strip():
             raw_text = inference.get("raw_text")
@@ -126,16 +121,15 @@ class VocabView(APIView):
     def post(self, request):
         word = request.data.get("word")
         if not word:
-            error_serializer = ErrorResponseSerializer({"message": "缺少必要參數"})
-            return Response(error_serializer.data, status=status.HTTP_400_BAD_REQUEST,
+            return Response({"message":"缺少必要參數"}, status=status.HTTP_400_BAD_REQUEST,
                             content_type='application/json; charset=utf-8')
         try:
             client = get_novita_client()
             prompt_messages = client.build_vocab_messages(word)
             inference = client.analyze_text(prompt_messages)
         except Exception as e:
-            error_serializer = ErrorResponseSerializer({"message": str(e)})
-            return Response(error_serializer.data, status=status.HTTP_502_BAD_GATEWAY,
+            logger.exception("Error during vocab analysis: %s", str(e))
+            return Response({"message":"AI 服務暫時無法使用，請稍後再試"}, status=status.HTTP_502_BAD_GATEWAY,
                             content_type='application/json; charset=utf-8')
 
         parsed: Dict[str, Any] = inference.get("parsed") or {}

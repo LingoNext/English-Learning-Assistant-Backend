@@ -2,25 +2,25 @@
 
 ### 表格1：API 端點規格表
 
-|              資源路徑               |    操作名稱    | HTTP方法 |                  請求參數                  |                              回應 data                               |        狀態碼         |  備註  |
-|:-------------------------------:|:----------:|:------:|:--------------------------------------:|:------------------------------------------------------------------:|:------------------:|:----:|
-|         `/auth/login/`          |    用戶登入    |  POST  |          { email, password }           |                  { access_token, refresh_token }                   |   200, 400, 401    |  -   |
-|     `/auth/token/refresh/`      | 重新整理 Token |  POST  |           { refresh_token }            |                          { access_token }                          |   200, 400, 401    |  -   |
-|      `/auth/token/verify/`      |  驗證 Token  |  POST  |            { access_token }            |                                 -                                  |   200, 400, 401    |  -   |
-|   `/auth/verification/send/`    |   發送驗證碼    |  POST  |           { email, purpose }           |                                 -                                  |    200, 400,429    |  -   |
-|  `/auth/registration/confirm/`  |    註冊確認    |  POST  | { email, password, verification_code } |                                 -                                  |   201, 400, 409    |  -   |
-| `/auth/password/reset/confirm/` |    密碼重設    |  POST  | { email, password, verification_code } |                                 -                                  | 200, 400, 401,404  |  -   |
-|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |              { password }              |                                 -                                  |   204, 400, 401    | 需要驗證 |
-|          `/auth/user/`          |   取得用戶資料   |  GET   |                   -                    |                          { email, name }                           |      200, 401      | 需要驗證 |
-|          `/auth/user/`          |   更新用戶資料   |  PUT   |              { new_name }              |                                 -                                  |   200, 400, 401    | 需要驗證 |
-|   `/chat/conversations/all/`    |   取得對話列表   |  GET   |                   -                    | Array<{ conversation_id, first_user_question, count, updated_at }> |      200, 401      | 需要驗證 |
-|      `/chat/conversation/`      |   取得特定對話   |  POST  |          { conversation_id }           |                      Array<{ text, is_user }>                      |      200, 401      | 需要驗證 |
-|     `/chat/conversations/`      |   建立新對話    |  POST  |           { text, is_user }            |                        { conversation_id }                         |   201, 400, 401    | 需要驗證 |
-|     `/chat/conversations/`      |    刪除對話    | DELETE |          { conversation_id }           |                                 -                                  |   204, 401, 404    | 需要驗證 |
-|        `/chat/messages/`        |   建立新訊息    |  POST  |   { conversation_id, text, is_user }   |                                 -                                  | 201, 400, 401, 404 | 需要驗證 |
-|         `llm/analyze/`          |    分析影像    |  POST  |               { image }                |                   VisualAnalysisSerializer.data                    |   200, 400, 502    |      |
-|          `llm/vocab/`           |    詞彙分析    |  POST  |                { word }                |                    VocabResponseSerializer.data                    |   200, 400, 502    |      |
-|           `llm/chat/`           |    聊天對話    |  POST  |     { messages,analysis_enabled }      |                    ChatResponseSerializer.data                     |   200, 400, 502    |      |
+|              資源路徑               |    操作名稱    | HTTP方法 |                  請求參數                  |                              回應 data                               |        狀態碼        |  備註  |
+|:-------------------------------:|:----------:|:------:|:--------------------------------------:|:------------------------------------------------------------------:|:-----------------:|:----:|
+|         `/auth/login/`          |    用戶登入    |  POST  |          { email, password }           |                  { access_token, refresh_token }                   |   200,400, 401    |  -   |
+|     `/auth/token/refresh/`      | 重新整理 Token |  POST  |           { refresh_token }            |                          { access_token }                          |   200,400, 401    |  -   |
+|      `/auth/token/verify/`      |  驗證 Token  |  POST  |            { access_token }            |                                 -                                  |   200,400, 401    |  -   |
+|   `/auth/verification/send/`    |   發送驗證碼    |  POST  |           { email, purpose }           |                                 -                                  |    200,400,429    |  -   |
+|  `/auth/registration/confirm/`  |    註冊確認    |  POST  | { email, password, verification_code } |                                 -                                  |   201,400, 409    |  -   |
+| `/auth/password/reset/confirm/` |    密碼重設    |  POST  | { email, password, verification_code } |                                 -                                  | 200,400, 401,404  |  -   |
+|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |              { password }              |                                 -                                  |   204,400, 401    | 需要驗證 |
+|          `/auth/user/`          |   取得用戶資料   |  GET   |                   -                    |                          { email, name }                           |     200, 401      | 需要驗證 |
+|          `/auth/user/`          |   更新用戶資料   |  PUT   |              { new_name }              |                                 -                                  |   200,400, 401    | 需要驗證 |
+|   `/chat/conversations/all/`    |   取得對話列表   |  GET   |                   -                    | Array<{ conversation_id, first_user_question, count, updated_at }> |     200, 401      | 需要驗證 |
+|      `/chat/conversation/`      |   取得特定對話   |  POST  |          { conversation_id }           |                      Array<{ text, is_user }>                      |   200,400, 401    | 需要驗證 |
+|     `/chat/conversations/`      |   建立新對話    |  POST  |           { text, is_user }            |                        { conversation_id }                         |   201,400, 401    | 需要驗證 |
+|     `/chat/conversations/`      |    刪除對話    | DELETE |          { conversation_id }           |                                 -                                  | 204,400, 401, 404 | 需要驗證 |
+|        `/chat/messages/`        |   建立新訊息    |  POST  |   { conversation_id, text, is_user }   |                                 -                                  | 201,400, 401, 404 | 需要驗證 |
+|         `/llm/analyze/`         |    分析影像    |  POST  |               { image }                |                   VisualAnalysisSerializer.data                    |   200,400, 502    |      |
+|          `/llm/vocab/`          |    詞彙分析    |  POST  |                { word }                |                    VocabResponseSerializer.data                    |   200,400, 502    |      |
+|          `/llm/chat/`           |    聊天對話    |  POST  |     { messages,analysis_enabled }      |                    ChatResponseSerializer.data                     |   200,400, 502    |      |
 
 ### 表格2：簡化序列化器規格表
 

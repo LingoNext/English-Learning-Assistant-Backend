@@ -54,8 +54,3 @@ class VocabResponseSerializer(serializers.Serializer):
     example_en = serializers.CharField(required=False, allow_blank=True)
     example_zh = serializers.CharField(required=False, allow_blank=True)
     error = serializers.CharField(required=False, allow_blank=True)
-
-
-class ErrorResponseSerializer(serializers.Serializer):
-    """錯誤響應序列化器"""
-    message = serializers.CharField()
