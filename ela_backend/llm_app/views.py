@@ -24,7 +24,7 @@ class VisualView(APIView):
         try:
             client = get_novita_client()
             compose_image = ImageCompressor.compress_image_file(image, 1 * 1024 * 1024)
-            #print(f"before compression: {image.size} bytes, after compression: {len(compose_image)} bytes")
+            print(f"before compression: {image.size} bytes, after compression: {len(compose_image)} bytes")
             inference = client.analyze_image(compose_image)
         except Exception as e:
             logger.exception("Error during image analysis: %s", str(e))

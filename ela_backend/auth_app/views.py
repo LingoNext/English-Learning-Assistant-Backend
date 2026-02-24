@@ -83,41 +83,120 @@ class SendVerificationCode(APIView):
         device_type = "行動裝置" if any(
             mobile in user_agent.lower() for mobile in ['mobile', 'android', 'iphone', 'ipad']) else "桌面裝置"
 
-        # 簡化裝置資訊顯示
         device_info = f"裝置類型：{device_type}"
         if device_id:
-            device_info += f"\n        裝置 ID：{device_id[:8]}****"  # 只顯示前8位，保護隱私
+            device_info += f" | 裝置 ID：{device_id[:8]}****"  # 只顯示前8位，保護隱私
         else:
-            device_info += f"\n        裝置指紋：{device_fingerprint[:8]}****"
+            device_info += f" | 指紋 ID：{device_fingerprint[:8]}****"
 
-        message = f"""
-        您好，
-        我們收到一筆帳號{action}請求，以下為您的驗證碼：
+        html_message = f"""
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>驗證碼通知</title>
+  <style>
+    body {{
+      margin:0; padding:0;
+      background:#f9f9f9;
+      font-family: Arial, sans-serif;
+      color:#111;
+    }}
+    .container {{
+      max-width:500px;
+      margin:24px auto;
+      background:#fff;
+      border-radius:6px;
+      padding:20px;
+    }}
+    .header {{
+      text-align:center;
+      font-weight:600;
+      font-size:18px;
+      margin-bottom:16px;
+    }}
+    .body p {{
+      font-size:14px;
+      margin:12px 0;
+    }}
+    .code-card {{
+      background:#f4f4f4;
+      padding:16px;
+      text-align:center;
+      border-radius:6px;
+      margin:16px 0;
+    }}
+    .code {{
+      font-size:24px;
+      letter-spacing:3px;
+      font-weight:600;
+      color:#0b6efd;
+    }}
+    .meta {{
+      font-size:12px;
+      color:#555;
+      margin-top:6px;
+    }}
+    .footer {{
+      font-size:12px;
+      color:#888;
+      text-align:center;
+      margin-top:20px;
+    }}
+    @media (max-width:420px) {{
+      .code {{ font-size:20px; }}
+      .container {{ padding:14px; }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">英語學習小幫手 APP</div>
 
-        ────────────────────
-        驗證碼：{code}
-        有效期限：5 分鐘
-        ────────────────────
+    <div class="body">
+      <p>您好，</p>
+      <p>我們收到一筆 <strong>{action}</strong> 的請求。</p>
 
-        請於有效期限內完成驗證。
-        若超過時間，請重新發送驗證碼。
+      <div class="code-card">
+        <div class="code">{code}</div>
+        <div class="meta">有效期限：5 分鐘</div>
+      </div>
 
-        【安全資訊】
-        請求來源 IP：{client_ip}
+      <p style="font-size:12px; color:#555;">
+        請求來源 IP：{client_ip} <br />
         {device_info}
-        若您未曾進行此操作，請忽略此郵件，將不會受到影響。
+      </p>
 
-        ———
-        英語學習小幫手 APP
-        開發團隊：LingoNext
+      <p style="font-size:13px; color:#555; margin-top:12px;">
+        若您未曾進行此操作，請忽略此郵件。
+      </p>
+    </div>
 
-        國立臺中科技大學 資訊工程系
-        2026 資訊與流通學院 大學部畢業專題
+    <div class="footer">
+      英語學習小幫手 APP 開發團隊 LingoNext<br />
+      國立臺中科技大學 資訊工程系 2026 畢業專題
+    </div>
+  </div>
+</body>
+</html>
+"""
+        text_message = f"""
+您好：
 
-        專題展示頁面：
-        https://english-learning-assistant.pages.dev/
-        （建議使用手機 App 體驗完整功能）
-        """
+您的驗證碼為：{code}
+請於五分鐘內完成{action}。
+
+若您並未進行此操作，請直接忽略此郵件，無需進行任何操作。
+
+英語學習小幫手 APP
+國立臺中科技大學 資訊工程系
+2026 畢業專題
+開發團隊：LingoNext
+
+網頁版專題展示：
+https://english-learning-assistant.pages.dev/
+"""
 
         # 使用 Resend API 發送郵件
         response = requests.post(
@@ -128,9 +207,10 @@ class SendVerificationCode(APIView):
             },
             json={
                 "from": getattr(settings, 'FROM_EMAIL', None),
-                "to": [email.strip()],
+                "to": [email],
                 "subject": subject,
-                "text": message,
+                "html": html_message,
+                "text": text_message,
             }
         )
         if response.status_code == 200:
