@@ -256,11 +256,11 @@ class RegistrationConfirm(APIView):
 
         # 建立用戶(預設從 email 提取 @ 前面的字串作為 name)
         name = email.split('@')[0]
-        user = User(
+        user = User.objects.create_user(
             email=email,
-            first_name=name
+            first_name=name,
+            password=password
         )
-        user.set_password(password)
         user.save()
 
         # 刪除已使用的驗證碼
