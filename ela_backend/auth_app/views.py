@@ -6,7 +6,6 @@ from django.core.cache import cache
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth.hashers import make_password
 from .serializers import (
     UserLoginSerializer,
@@ -19,7 +18,6 @@ from .rate_limiter import (
     email_rate_limit_v2,
     general_rate_limit,
     get_client_ip,
-    get_device_id_from_request,
     get_or_create_device_id
 )
 import requests
@@ -46,10 +44,9 @@ class SendVerificationCode(APIView):
 
         # 記錄客戶端 IP 用於日誌
         client_ip = get_client_ip(request)
-        device_id = get_device_id_from_request(request)
         device_fingerprint = get_or_create_device_id(request)
 
-        print(f"Verification code requested for {email} from IP {client_ip}, Device ID: {device_id}")
+        print(f"Verification code requested for {email} from IP {client_ip}")
 
         if not email or not purpose:
             return Response({"message": "缺少必要參數", "data": None}, status=status.HTTP_400_BAD_REQUEST,
@@ -84,11 +81,7 @@ class SendVerificationCode(APIView):
             mobile in user_agent.lower() for mobile in ['mobile', 'android', 'iphone', 'ipad']) else "桌面裝置"
 
         device_info = f"裝置類型：{device_type}"
-        if device_id:
-            device_info += f" | 裝置 ID：{device_id[:8]}****"  # 只顯示前8位，保護隱私
-        else:
-            device_info += f" | 指紋 ID：{device_fingerprint[:8]}****"
-
+        device_info +=f" | 指紋 ID：{device_fingerprint[:8]}****"# 只顯示前8位，保護隱私
         html_message = f"""
 <!doctype html>
 <html lang="zh-Hant">
