@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.hashers import make_password
+from rest_framework.exceptions import ValidationError
 from .serializers import (
     UserLoginSerializer,
     RegistrationConfirmSerializer,
@@ -226,15 +227,16 @@ class RegistrationConfirm(APIView):
     @general_rate_limit(max_requests=10, time_window=300, action_type='registration_confirm')  # 5分鐘內最多10次註冊嘗試
     def post(self, request):
         serializer = RegistrationConfirmSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError:
+            return Response({
+                "message": "缺少必要參數"
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         email = serializer.validated_data["email"]
         code = serializer.validated_data["verification_code"]
-        if not email or not code:
-            return Response({
-                "message": "缺少必要參數",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+        password = serializer.validated_data["password"]
 
         email_normalized = email.strip().lower()  # 去空格、統一小寫
         email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
@@ -258,7 +260,7 @@ class RegistrationConfirm(APIView):
             email=email,
             first_name=name
         )
-        user.set_password(serializer.validated_data["password"])
+        user.set_password(password)
         user.save()
 
         # 刪除已使用的驗證碼
@@ -279,18 +281,19 @@ class LoginView(APIView):
     """
     permission_classes = [AllowAny]
 
-    @general_rate_limit(max_requests=5, time_window=300, action_type='login')  # 5分鐘內最多5次登入嘗試
+    @general_rate_limit(max_requests=10, time_window=300, action_type='login')  # 5分鐘內最多10次登入嘗試
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError:
+            return Response({
+                "message": "缺少必要參數"
+            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
-        if not email or not password:
-            return Response({
-                "message": "缺少必要參數",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+
         # 使用 Django authenticate 驗證
         user = authenticate(request, username=email, password=password)
 
