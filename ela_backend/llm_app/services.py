@@ -9,17 +9,6 @@ from io import BytesIO
 from PIL import Image, ImageOps
 
 
-def _estimate_token_count(text: str) -> int:
-    """Rough estimate of token count for text (1 token ≈ 4 chars for most text)"""
-    return len(text) // 4
-
-
-def _calculate_conversation_tokens(messages: List[Dict[str, str]]) -> int:
-    """Calculate total estimated tokens in a conversation"""
-    total_chars = sum(len(msg.get("content", "")) for msg in messages)
-    return _estimate_token_count(str(total_chars))
-
-
 @dataclass
 class NovitaQwenClient:
     api_key: str
@@ -33,8 +22,8 @@ class NovitaQwenClient:
         prompt, messages = self.build_messages(data_uri)
         payload = {
             "messages": messages,
-            "max_tokens": 512,
-            "temperature": 0.4,
+            "max_tokens": 700,
+            "temperature": 0.7,
         }
         response = self.post(payload)
         response_text = self.extract_text(response)
@@ -50,8 +39,8 @@ class NovitaQwenClient:
     def analyze_text(self, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
         payload = {
             "messages": messages,
-            "max_tokens": 512,
-            "temperature": 0.4,
+            "max_tokens": 700,
+            "temperature": 0.7,
         }
         response = self.post(payload)
         response_text = self.extract_text(response)
@@ -173,22 +162,17 @@ class NovitaQwenClient:
             self,
             conversation: List[Dict[str, str]],
             analysis_enabled: bool,
-            max_context_tokens: int = 1500,
     ) -> List[Dict[str, Any]]:
-        # Check if conversation is too long and needs summarization
-        conversation_tokens = _calculate_conversation_tokens(conversation)
+        # Keep the last few messages and summarize the rest
+        recent_messages = conversation[-4:]  # Keep last 4 messages for context
+        older_messages = conversation[:-4]
 
-        if conversation_tokens > max_context_tokens and len(conversation) > 6:
-            # Keep the last few messages and summarize the rest
-            recent_messages = conversation[-4:]  # Keep last 4 messages for context
-            older_messages = conversation[:-4]
-
-            if older_messages:
-                summary = self._summarize_conversation(older_messages)
-                # Create summarized conversation
-                conversation = [
-                                   {"role": "system", "content": f"Previous conversation summary: {summary}"}
-                               ] + recent_messages
+        if len(conversation) > 6 and older_messages:
+            summary = self._summarize_conversation(older_messages)
+            # Create summarized conversation
+            conversation = [
+                               {"role": "assistant", "content": f"Previous conversation summary: {summary}"}
+                           ] + recent_messages
 
         if analysis_enabled:
 
@@ -196,26 +180,53 @@ class NovitaQwenClient:
                 "English tutor. JSON only.\n"
                 "Format:\n"
                 "{\n"
-                "  \"reply\": \"1-2 sentences, no repeat\",\n"
+                "  \"reply\": \"natural conversational response\",\n"
                 "  \"user_grammar\": {\n"
-                "    \"is_correct\": bool,\n"
-                "    \"corrected_text\": \"if wrong\",\n"
+                "    \"is_correct\": bool or null,\n"
+                "    \"corrected_text\": \"string or null\",\n"
                 "    \"errors\": [\"list\"],\n"
                 "    \"explanation\": \"Traditional Chinese\"\n"
                 "  },\n"
                 "  \"grammar_structure\": {\n"
-                "    \"type\": \"structure type\",\n"
-                "    \"description\": \"brief desc\",\n"
-                "    \"example\": \"optional\"\n"
+                "    \"type\": \"structure type or null\",\n"
+                "    \"description\": \"brief desc or null\",\n"
+                "    \"example\": \"optional or null\"\n"
                 "  }\n"
                 "}\n"
-                "Analyze user's last message only."
+                "Rules:\n"
+                "1. If the user input is NOT a English sentence:\n"
+                "   - set \"is_correct\" to null\n"
+                "   - set \"corrected_text\" to null\n"
+                "   - set \"errors\" to []\n"
+                "   - set \"explanation\" to \"非英文句子，不進行文法分析。\"\n"
+                "   - set \"grammar_structure\" to null\n"
+                "\n"
+                "2. If the user input is an English sentence:\n"
+                "   - perform grammar analysis normally.\n"
+                "\n"
+                "3. reply MUST:\n"
+                "   - be a natural conversational response\n"
+                "   - continue the conversation\n"
+                "   - NOT repeat corrected_text\n"
+                "   - NOT restate or paraphrase corrected_text\n"
+                "   - NOT contain the full corrected sentence\n"
+                "\n"
+                "4. corrected_text is ONLY for grammar correction display.\n"
+                "\n"
+                "5. All Chinese text MUST be in Traditional Chinese.\n"
+                "\n"
+                "6. Output JSON only. No Markdown. No code block. No extra text.\n"
             )
         else:
             prompt = (
                 "English tutor. JSON only:\n"
                 "{\"reply\": \"Natural response, don't repeat user input\"}\n"
-                "1-2 sentences max.")
+                "Rules:\n"
+                "1. 5 sentences max."
+                "2. If user contains English, reply in English. Otherwise, reply in Chinese."
+                "3. All Chinese text MUST be in Traditional Chinese."
+                "4. Output JSON only. No Markdown. No code block. No extra text.\n"
+            )
         messages: List[Dict[str, Any]] = [{"role": "system", "content": prompt}]
         messages.extend(conversation)
         return messages

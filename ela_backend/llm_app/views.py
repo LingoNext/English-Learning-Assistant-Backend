@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .services import get_novita_client, _calculate_conversation_tokens, ImageCompressor
+from .services import get_novita_client, ImageCompressor
 from rest_framework.permissions import AllowAny
 from .serializers import VisualAnalysisSerializer, ChatResponseSerializer, VocabResponseSerializer
 import logging
@@ -73,12 +73,9 @@ class ChatView(APIView):
             return Response({"message": "缺少必要參數"}, status=status.HTTP_400_BAD_REQUEST,
                             content_type='application/json; charset=utf-8')
 
-        # Calculate original conversation token count
-        original_tokens = _calculate_conversation_tokens(conversation)
-
         try:
             client = get_novita_client()
-            prompt_messages = client.build_chat_messages(conversation, analysis_enabled, original_tokens)
+            prompt_messages = client.build_chat_messages(conversation, analysis_enabled)
             inference = client.analyze_text(prompt_messages)
         except Exception as e:
             logger.exception("Error during chat analysis: %s", str(e))
@@ -93,16 +90,9 @@ class ChatView(APIView):
             raw_text = inference.get("raw_text")
             reply = raw_text if isinstance(raw_text, str) else ""
 
-        if analysis_enabled:
-            if not isinstance(user_grammar, dict):
-                user_grammar = {
-                    "is_correct": False,
-                    "corrected_text": "",
-                    "errors": ["沒有任何語法分析的結果"],
-                    "explanation": "",
-                }
-        else:
+        if not analysis_enabled:
             user_grammar = None
+            grammar_structure = None
 
         response_data = {
             "reply": reply,
