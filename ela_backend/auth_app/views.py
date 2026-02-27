@@ -8,6 +8,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.hashers import make_password
 from rest_framework.exceptions import ValidationError
+from django.utils import timezone
 from .serializers import (
     UserLoginSerializer,
     RegistrationConfirmSerializer,
@@ -82,7 +83,7 @@ class SendVerificationCode(APIView):
             mobile in user_agent.lower() for mobile in ['mobile', 'android', 'iphone', 'ipad']) else "桌面裝置"
 
         device_info = f"裝置類型：{device_type}"
-        device_info +=f" | 指紋 ID：{device_fingerprint[:8]}****"# 只顯示前8位，保護隱私
+        device_info += f" | 指紋 ID：{device_fingerprint[:8]}****"  # 只顯示前8位，保護隱私
         html_message = f"""
 <!doctype html>
 <html lang="zh-Hant">
@@ -293,15 +294,30 @@ class LoginView(APIView):
 
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
-
+        # 嘗試取得使用者（不驗證密碼）
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({
+                "message": "使用者不存在"
+            }, status=status.HTTP_404_NOT_FOUND)
+        if not user.is_active:
+            return Response({
+                "message": "此帳號已被停用"
+            }, status=status.HTTP_403_FORBIDDEN)
         # 使用 Django authenticate 驗證
         user = authenticate(request, username=email, password=password)
 
         if user is not None:
+            last_login = user.last_login
+            login_info = f"上次登入日期：{last_login.strftime('%Y-%m-%d')}" if last_login else "首次登入"
+            # 更新最後登入時間
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
             # 產生 JWT Token
             refresh = RefreshToken.for_user(user)
             return Response({
-                "message": "登入成功",
+                "message": f"登入成功 {login_info}",
                 "data": {
                     "access_token": str(refresh.access_token),
                     "refresh_token": str(refresh)

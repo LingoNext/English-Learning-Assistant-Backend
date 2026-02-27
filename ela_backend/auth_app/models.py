@@ -18,10 +18,11 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     # email: 電子郵件，必填，唯一
     username = None
+    last_name= None
 
     email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=150, default="")
-    created_at = models.DateTimeField(auto_now_add=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    # data_joined: 用戶註冊時間，自動設置為當前時間
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from .models import Conversation, Message
 from .serializers import ConversationListSerializer, MessageListSerializer
 
-
 class ConversationAllView(APIView):
     """
     GET /chat/conversations/all/ - 取得對話列表

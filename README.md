@@ -2,25 +2,25 @@
 
 ### 表格1：API 端點規格表
 
-|              資源路徑               |    操作名稱    | HTTP方法 |                  請求參數                  |                              回應 data                               |        狀態碼        |  備註  |
-|:-------------------------------:|:----------:|:------:|:--------------------------------------:|:------------------------------------------------------------------:|:-----------------:|:----:|
-|         `/auth/login/`          |    用戶登入    |  POST  |          { email, password }           |                  { access_token, refresh_token }                   |   200,400, 401    |  -   |
-|     `/auth/token/refresh/`      | 重新整理 Token |  POST  |           { refresh_token }            |                          { access_token }                          |   200,400, 401    |  -   |
-|      `/auth/token/verify/`      |  驗證 Token  |  POST  |            { access_token }            |                                 -                                  |   200,400, 401    |  -   |
-|   `/auth/verification/send/`    |   發送驗證碼    |  POST  |           { email, purpose }           |                                 -                                  |    200,400,429    |  -   |
-|  `/auth/registration/confirm/`  |    註冊確認    |  POST  | { email, password, verification_code } |                                 -                                  |   201,400, 409    |  -   |
-| `/auth/password/reset/confirm/` |    密碼重設    |  POST  | { email, password, verification_code } |                                 -                                  | 200,400, 401,404  |  -   |
-|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |              { password }              |                                 -                                  |   204,400, 401    | 需要驗證 |
-|          `/auth/user/`          |   取得用戶資料   |  GET   |                   -                    |                          { email, name }                           |     200, 401      | 需要驗證 |
-|          `/auth/user/`          |   更新用戶資料   |  PUT   |              { new_name }              |                                 -                                  |   200,400, 401    | 需要驗證 |
-|   `/chat/conversations/all/`    |   取得對話列表   |  GET   |                   -                    | Array<{ conversation_id, first_user_question, count, updated_at }> |     200, 401      | 需要驗證 |
-|      `/chat/conversation/`      |   取得特定對話   |  POST  |          { conversation_id }           |                      Array<{ text, is_user }>                      |   200,400, 401    | 需要驗證 |
-|     `/chat/conversations/`      |   建立新對話    |  POST  |           { text, is_user }            |                        { conversation_id }                         |   201,400, 401    | 需要驗證 |
-|     `/chat/conversations/`      |    刪除對話    | DELETE |          { conversation_id }           |                                 -                                  | 204,400, 401, 404 | 需要驗證 |
-|        `/chat/messages/`        |   建立新訊息    |  POST  |   { conversation_id, text, is_user }   |                                 -                                  | 201,400, 401, 404 | 需要驗證 |
-|         `/llm/analyze/`         |    分析影像    |  POST  |               { image }                |                   VisualAnalysisSerializer.data                    |   200,400, 502    |      |
-|          `/llm/vocab/`          |    詞彙分析    |  POST  |                { word }                |                    VocabResponseSerializer.data                    |   200,400, 502    |      |
-|          `/llm/chat/`           |    聊天對話    |  POST  |     { messages,analysis_enabled }      |                    ChatResponseSerializer.data                     |   200,400, 502    |      |
+|              資源路徑               |    操作名稱    | HTTP方法 |                  請求參數                  |                              回應 data                               |          狀態碼          |  備註  |
+|:-------------------------------:|:----------:|:------:|:--------------------------------------:|:------------------------------------------------------------------:|:---------------------:|:----:|
+|         `/auth/login/`          |    用戶登入    |  POST  |          { email, password }           |                  { access_token, refresh_token }                   |   200,400, 401,403    |  -   |
+|     `/auth/token/refresh/`      | 重新整理 Token |  POST  |           { refresh_token }            |                          { access_token }                          |     200,400, 401      |  -   |
+|      `/auth/token/verify/`      |  驗證 Token  |  POST  |            { access_token }            |                                 -                                  |     200,400, 401      |  -   |
+|   `/auth/verification/send/`    |   發送驗證碼    |  POST  |           { email, purpose }           |                                 -                                  |      200,400,429      |  -   |
+|  `/auth/registration/confirm/`  |    註冊確認    |  POST  | { email, password, verification_code } |                                 -                                  |     201,400, 409      |  -   |
+| `/auth/password/reset/confirm/` |    密碼重設    |  POST  | { email, password, verification_code } |                                 -                                  |   200,400, 401,404    |  -   |
+|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |              { password }              |                                 -                                  |   204,400, 401,403    | 需要驗證 |
+|          `/auth/user/`          |   取得用戶資料   |  GET   |                   -                    |                          { email, name }                           |     200, 401,403      | 需要驗證 |
+|          `/auth/user/`          |   更新用戶資料   |  PUT   |              { new_name }              |                                 -                                  |   200,400, 401,403    | 需要驗證 |
+|   `/chat/conversations/all/`    |   取得對話列表   |  GET   |                   -                    | Array<{ conversation_id, first_user_question, count, updated_at }> |     200, 401,403      | 需要驗證 |
+|      `/chat/conversation/`      |   取得特定對話   |  POST  |          { conversation_id }           |                      Array<{ text, is_user }>                      |   200,400, 401,403    | 需要驗證 |
+|     `/chat/conversations/`      |   建立新對話    |  POST  |           { text, is_user }            |                        { conversation_id }                         |   201,400, 401,403    | 需要驗證 |
+|     `/chat/conversations/`      |    刪除對話    | DELETE |          { conversation_id }           |                                 -                                  | 204,400, 401,403, 404 | 需要驗證 |
+|        `/chat/messages/`        |   建立新訊息    |  POST  |   { conversation_id, text, is_user }   |                                 -                                  | 201,400, 401,403, 404 | 需要驗證 |
+|         `/llm/analyze/`         |    分析影像    |  POST  |               { image }                |                   VisualAnalysisSerializer.data                    |     200,400, 502      |      |
+|          `/llm/vocab/`          |    詞彙分析    |  POST  |                { word }                |                    VocabResponseSerializer.data                    |     200,400, 502      |      |
+|          `/llm/chat/`           |    聊天對話    |  POST  |     { messages,analysis_enabled }      |                    ChatResponseSerializer.data                     |     200,400, 502      |      |
 
 ### 表格2：簡化序列化器規格表
 
@@ -50,18 +50,17 @@
 
 #### 用戶身份驗證相關 User (AbstractUser 擴展)
 
-|     欄位名稱     |      資料型別      | 是否必填 |  預設值  |            說明            |
-|:------------:|:--------------:|:----:|:-----:|:------------------------:|
-|    email     | string (email) |  是   |   -   |           電子郵件           |
-|   password   |     string     |  是   |   -   |         密碼，需加密存儲         |
-|  first_name  |     string     |  是   |  ""   |   名字（繼承自 AbstractUser）   |
-|  last_name   |     string     |  否   |  ""   |   姓氏（繼承自 AbstractUser）   |
-|  is_active   |    boolean     |  否   | True  |          帳號是否啟用          |
-|   is_staff   |    boolean     |  否   | False |          是否為管理員          |
-| is_superuser |    boolean     |  否   | False |         是否為超級管理員         |
-| date_joined  |    datetime    |  否   |   -   | 帳號註冊時間（繼承自 AbstractUser） |
-|  last_login  |    datetime    |  否   |   -   | 最後登入時間（繼承自 AbstractUser） |
-|  created_at  |    datetime    |  否   |   -   |       帳號建立時間（自動生成）       |
+|     欄位名稱     |   資料型別   | 是否必填 |  預設值  |       說明       |
+|:------------:|:--------:|:----:|:-----:|:--------------:|
+|      id      | integer  |  是   |   -   |       主鍵       |
+|    email     |  string  |  是   |   -   |  用戶電子郵件地址（唯一）  |
+|   password   |  string  |  是   |   -   |      用戶密碼      |
+|  first_name  |  string  |  否   |   -   |     用戶顯示名稱     |
+|  is_active   | boolean  |  否   | True  |    用戶帳號是否啟用    |
+| date_joined  | datetime |  否   |   -   |  用戶註冊時間（自動生成）  |
+|  last_login  | datetime |  否   |   -   | 用戶最後登入時間（自動更新） |
+|   is_staff   | boolean  |  否   | False |   用戶是否為工作人員    |
+| is_superuser | boolean  |  否   | False |   用戶是否為超級用戶    |
 
 #### 對話管理相關 Conversation
 
@@ -101,7 +100,7 @@
 3. **字元編碼**: 所有文字內容均使用 UTF-8 編碼`charset=utf-8`，不然前端 flutter 收到 Response 的 message 有中文會變成亂碼
 4. **內容類型**: 除圖片外，所有請求和回應均使用 `application/json` 格式
 5. **電子郵件驗證**: 系統會寄送一次性驗證碼至用戶電子郵件(含有 HTML 格式)，有效期為五分鐘
-6. **郵件防刷機制**: 為防止濫用，系統對 IP 和 裝置 ID 址的多層識別限制驗證碼間隔 1 分鐘發送且 1 小時內最多 5 次
+6. **郵件防刷機制**: 為防止濫用，系統對 IP 地址和 裝置 ID 的多層識別限制驗證碼間隔 1 分鐘發送且 1 小時內最多 5 次
 7. **郵件附帶資訊**: 郵件內容中附帶用戶的裝置資訊與 IP 位址，這在安全、風控、用戶信任上都加分
 8. **Token 生命週期**: Access Token 會在 1 小時後過期，Refresh Token 會在 7 天後過期。登出時前端丟棄兩個 Token 就好
 9. **Response 格式**: 所有 API 的回應均使用統一的格式，包含 `status`(由 HttpResponse 狀態碼決定)、`message` 和 `data`(
@@ -110,3 +109,5 @@
 11. **跨域資源共享 (CORS)**: API 支援跨域請求，只允許來自特定網域的前端應用程式存取，防止跨站請求偽造 (CSRF) 攻擊
 12. **分頁**: 對於可能返回大量資料的端點（如取得對話列表），支援分頁查詢，預設每頁返回 10 筆資料(未來擴充，可以不做)
 13. **status 500**: 為伺服器錯誤，通常不會特別列在表格中，但在實作時仍需處理此類錯誤情況
+14. **PBKDF2-SHA256**:單向雜湊（one-way hash），不可逆，只能驗證和更改密碼，確保即使資料庫洩漏，攻擊者也無法還原原始密碼
+15. **is_active**: 可以用於實現帳號停用功能，當用戶違規或需要暫時禁止登入時，可以將此欄位設為 False，而不刪除用戶資料
