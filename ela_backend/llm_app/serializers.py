@@ -41,6 +41,7 @@ class GrammarStructureSerializer(serializers.Serializer):
 class ChatResponseSerializer(serializers.Serializer):
     """對話響應序列化器"""
     reply = serializers.CharField()
+    title = serializers.CharField(required=False, allow_blank=True)
     user_grammar = UserGrammarSerializer(required=False, allow_null=True)
     grammar_structure = GrammarStructureSerializer(required=False, allow_null=True)
 

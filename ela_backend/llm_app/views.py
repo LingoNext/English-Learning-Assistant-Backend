@@ -2,6 +2,8 @@ from typing import Any, Dict, List
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from chat_app.models import Conversation
 from .services import get_novita_client, ImageCompressor
 from rest_framework.permissions import AllowAny
 from .serializers import VisualAnalysisSerializer, ChatResponseSerializer, VocabResponseSerializer
@@ -83,6 +85,7 @@ class ChatView(APIView):
                             content_type='application/json; charset=utf-8')
 
         parsed: Dict[str, Any] = inference.get("parsed") or {}
+        title = parsed.get("title") if isinstance(parsed, dict) else None
         user_grammar = parsed.get("user_grammar") if isinstance(parsed, dict) else None
         grammar_structure = parsed.get("grammar_structure") if isinstance(parsed, dict) else None
         reply = parsed.get("reply") if isinstance(parsed, dict) else None
@@ -96,10 +99,10 @@ class ChatView(APIView):
 
         response_data = {
             "reply": reply,
+            "title": title,
             "user_grammar": user_grammar,
             "grammar_structure": grammar_structure
         }
-
         serializer = ChatResponseSerializer(response_data)
         return Response(serializer.data, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
 

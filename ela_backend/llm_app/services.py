@@ -181,6 +181,7 @@ class NovitaQwenClient:
                 "Format:\n"
                 "{\n"
                 "  \"reply\": \"natural conversational response\",\n"
+                "  \"title\": \"A brief title showing the content of the conversation\",\n"
                 "  \"user_grammar\": {\n"
                 "    \"is_correct\": bool or null,\n"
                 "    \"corrected_text\": \"string or null\",\n"
@@ -220,7 +221,9 @@ class NovitaQwenClient:
         else:
             prompt = (
                 "English tutor. JSON only:\n"
-                "{\"reply\": \"Natural response, don't repeat user input\"}\n"
+                "{\"reply\": \"Natural response, don't repeat user input\",\n"
+                "  \"title\": \"A brief title showing the content of the conversation\",\n"
+                "}\n"
                 "Rules:\n"
                 "1. 5 sentences max."
                 "2. If user contains English, reply in English. Otherwise, reply in Chinese."
@@ -268,11 +271,23 @@ class NovitaQwenClient:
             return "Previous conversation about English learning topics."
 
     def build_vocab_messages(self, word: str) -> List[Dict[str, Any]]:
-        prompt = (
-            "English tutor. JSON only:\n"
-            "{\"word\":\"\",\"ipa\":\"\",\"pos\":\"\",\"meaning_en\":\"\",\"meaning_zh\":\"Traditional Chinese\",\"example_en\":\"\",\"example_zh\":\"Traditional Chinese\",\"error\":\"\"}"
-            "Rules: Each chinese translation MUST be in traditional chinese"
-        )
+        prompt = """English tutor. Respond in JSON ONLY.
+        Format:
+        {
+          "word": "",
+          "ipa": "",
+          "pos": "",
+          "meaning_en": "", // MUST be in English only
+          "meaning_zh": "", // MUST be in Traditional Chinese
+          "example_en": "", // MUST be in English only
+          "example_zh": "", // MUST be in Traditional Chinese
+          "error": ""
+        }
+        Rules:
+        1. DO NOT put any Chinese in meaning_en or example_en.
+        2. All Chinese translations MUST be in Traditional Chinese.
+        3. Always return valid JSON without extra text.
+        4. Analyze the word in depth, including its usage, connotations, and any interesting linguistic features. The more detailed the analysis, the better."""
         user_instruction = f"Analyze: {word}"
         return [
             {"role": "system", "content": prompt},

@@ -9,6 +9,8 @@ class Conversation(models.Model):
         on_delete=models.CASCADE,
         related_name='user_conversations'
     )
+    # 對話標題
+    title = models.CharField(max_length=50, blank=True, help_text="對話標題")
     # 時間戳記
     created_at = models.DateTimeField(auto_now_add=True)
     # 最後更新時間
@@ -32,6 +34,7 @@ class Message(models.Model):
     text = models.TextField(help_text="訊息內容")
     # 是否為用戶訊息
     is_user = models.BooleanField(default=True, help_text="是否為用戶訊息")
+
     # 時間戳記
     timestamp = models.DateTimeField(auto_now_add=True)
 

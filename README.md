@@ -2,31 +2,32 @@
 
 ### 表格1：API 端點規格表
 
-|              資源路徑               |    操作名稱    | HTTP方法 |                  請求參數                  |                              回應 data                               |          狀態碼          |  備註  |
-|:-------------------------------:|:----------:|:------:|:--------------------------------------:|:------------------------------------------------------------------:|:---------------------:|:----:|
-|         `/auth/login/`          |    用戶登入    |  POST  |          { email, password }           |                  { access_token, refresh_token }                   |   200,400, 401,403    |  -   |
-|     `/auth/token/refresh/`      | 重新整理 Token |  POST  |           { refresh_token }            |                          { access_token }                          |     200,400, 401      |  -   |
-|      `/auth/token/verify/`      |  驗證 Token  |  POST  |            { access_token }            |                                 -                                  |     200,400, 401      |  -   |
-|   `/auth/verification/send/`    |   發送驗證碼    |  POST  |           { email, purpose }           |                                 -                                  |      200,400,429      |  -   |
-|  `/auth/registration/confirm/`  |    註冊確認    |  POST  | { email, password, verification_code } |                                 -                                  |     201,400, 409      |  -   |
-| `/auth/password/reset/confirm/` |    密碼重設    |  POST  | { email, password, verification_code } |                                 -                                  |   200,400, 401,404    |  -   |
-|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |              { password }              |                                 -                                  |   204,400, 401,403    | 需要驗證 |
-|          `/auth/user/`          |   取得用戶資料   |  GET   |                   -                    |                          { email, name }                           |     200, 401,403      | 需要驗證 |
-|          `/auth/user/`          |   更新用戶資料   |  PUT   |              { new_name }              |                                 -                                  |   200,400, 401,403    | 需要驗證 |
-|   `/chat/conversations/all/`    |   取得對話列表   |  GET   |                   -                    | Array<{ conversation_id, first_user_question, count, updated_at }> |     200, 401,403      | 需要驗證 |
-|      `/chat/conversation/`      |   取得特定對話   |  POST  |          { conversation_id }           |                      Array<{ text, is_user }>                      |   200,400, 401,403    | 需要驗證 |
-|     `/chat/conversations/`      |   建立新對話    |  POST  |           { text, is_user }            |                        { conversation_id }                         |   201,400, 401,403    | 需要驗證 |
-|     `/chat/conversations/`      |    刪除對話    | DELETE |          { conversation_id }           |                                 -                                  | 204,400, 401,403, 404 | 需要驗證 |
-|        `/chat/messages/`        |   建立新訊息    |  POST  |   { conversation_id, text, is_user }   |                                 -                                  | 201,400, 401,403, 404 | 需要驗證 |
-|         `/llm/analyze/`         |    分析影像    |  POST  |               { image }                |                   VisualAnalysisSerializer.data                    |     200,400, 502      |      |
-|          `/llm/vocab/`          |    詞彙分析    |  POST  |                { word }                |                    VocabResponseSerializer.data                    |     200,400, 502      |      |
-|          `/llm/chat/`           |    聊天對話    |  POST  |     { messages,analysis_enabled }      |                    ChatResponseSerializer.data                     |     200,400, 502      |      |
+|              資源路徑               |    操作名稱    | HTTP方法 |                   請求參數                   |             回應 data             |          狀態碼          |  備註  |
+|:-------------------------------:|:----------:|:------:|:----------------------------------------:|:-------------------------------:|:---------------------:|:----:|
+|         `/auth/login/`          |    用戶登入    |  POST  |           { email, password }            | { access_token, refresh_token } |   200,400, 401,403    |  -   |
+|     `/auth/token/refresh/`      | 重新整理 Token |  POST  |            { refresh_token }             |        { access_token }         |     200,400, 401      |  -   |
+|      `/auth/token/verify/`      |  驗證 Token  |  POST  |             { access_token }             |                -                |     200,400, 401      |  -   |
+|   `/auth/verification/send/`    |   發送驗證碼    |  POST  |            { email, purpose }            |                -                |      200,400,429      |  -   |
+|  `/auth/registration/confirm/`  |    註冊確認    |  POST  |  { email, password, verification_code }  |                -                |     201,400, 409      |  -   |
+| `/auth/password/reset/confirm/` |    密碼重設    |  POST  |  { email, password, verification_code }  |                -                |   200,400, 401,404    |  -   |
+|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |               { password }               |                -                |   204,400, 401,403    | 需要驗證 |
+|          `/auth/user/`          |   取得用戶資料   |  GET   |                    -                     |         { email, name }         |     200, 401,403      | 需要驗證 |
+|          `/auth/user/`          |   更新用戶資料   |  PUT   |               { new_name }               |                -                |   200,400, 401,403    | 需要驗證 |
+|   `/chat/conversations/all/`    |   取得對話列表   |  GET   |                    -                     | ConversationListSerializer.data |     200, 401,403      | 需要驗證 |
+|   `/chat/conversations/all/`    |   刪除全部對話   | DELETE |                    -                     |                -                |      200,401,403      | 需要驗證 |
+|      `/chat/conversation/`      |   取得特定對話   |  POST  |           { conversation_id }            |    Array<{ text, is_user }>     |   200,400, 401,403    | 需要驗證 |
+|     `/chat/conversations/`      |   建立新對話    |  POST  |         { text, is_user,title }          |       { conversation_id }       |   201,400, 401,403    | 需要驗證 |
+|     `/chat/conversations/`      |    刪除對話    | DELETE |           { conversation_id }            |                -                | 200,400, 401,403, 404 | 需要驗證 |
+|        `/chat/messages/`        |   建立新訊息    |  POST  | { conversation_id, text, is_user,title } |                -                | 201,400, 401,403, 404 | 需要驗證 |
+|         `/llm/analyze/`         |    分析影像    |  POST  |                { image }                 |  VisualAnalysisSerializer.data  |     200,400, 502      |      |
+|          `/llm/vocab/`          |    詞彙分析    |  POST  |                 { word }                 |  VocabResponseSerializer.data   |     200,400, 502      |      |
+|          `/llm/chat/`           |    聊天對話    |  POST  |      { messages,analysis_enabled }       |   ChatResponseSerializer.data   |     200,400, 502      |      |
 
 ### 表格2：簡化序列化器規格表
 
 |            序列化器名稱             |                              欄位名稱                              |        說明        |
 |:-----------------------------:|:--------------------------------------------------------------:|:----------------:|
-|  ConversationListSerializer   |    conversation_id, first_user_question, count, updated_at     |      返回對話列表      |
+|  ConversationListSerializer   |           conversation_id, title, count, updated_at            |      返回對話列表      |
 |     MessageListSerializer     |                         text, is_user                          |  用於取得特定對話的訊息列表   |
 |      UserLoginSerializer      |                        email, password                         |    用戶登入時的資料驗證    |
 | RegistrationConfirmSerializer |               email, password, verification_code               |    註冊確認時的資料驗證    |
@@ -38,7 +39,7 @@
 |    VocabResponseSerializer    | word,ipa,pos,meaning_en,meaning_zh,example_en,example_zh,error |   詞彙分析結果的詳細資訊    |
 |     UserGrammarSerializer     |          is_correct,corrected_text,errors,explanation          | 用於分析聊天對話中用戶語法的結果 |
 |  GrammarStructureSerializer   |                    type,description,example                    | 用於分析聊天對話中語法結構的結果 |
-|    ChatResponseSerializer     |              reply,user_grammar,grammar_structure              |  用於分析聊天對話的回應結果   |
+|    ChatResponseSerializer     |           reply,title,user_grammar,grammar_structure           |  用於分析聊天對話的回應結果   |
 
 
 
@@ -64,23 +65,23 @@
 
 #### 對話管理相關 Conversation
 
-|        欄位名稱         |    資料型別    | 是否必填 | 預設值 |        說明         |
-|:-------------------:|:----------:|:----:|:---:|:-----------------:|
-|         id          |  integer   |  是   |  -  |        主鍵         |
-|        user         | ForeignKey |  是   |  -  |  關聯到 User 模型的外鍵   |
-|     created_at      |  datetime  |  否   |  -  |   對話建立時間（自動生成）    |
-|     updated_at      |  datetime  |  否   |  -  |  對話最後更新時間（自動更新）   |
-| first_user_question |   string   |  否   |  -  | 用戶第一個問題（序列化時計算得出） |
+|    欄位名稱    |    資料型別    | 是否必填 | 預設值 |       說明       |
+|:----------:|:----------:|:----:|:---:|:--------------:|
+|     id     |  integer   |  是   |  -  |       主鍵       |
+|  user_id   | ForeignKey |  是   |  -  | 關聯到 User 模型的外鍵 |
+|   title    |   string   |  否   |  -  |      對話標題      |
+| created_at |  datetime  |  否   |  -  |  對話建立時間（自動生成）  |
+| updated_at |  datetime  |  否   |  -  | 對話最後更新時間（自動更新） |
 
 #### 聊天訊息相關 Message
 
-|     欄位名稱     |    資料型別    | 是否必填 | 預設值 |           說明           |
-|:------------:|:----------:|:----:|:---:|:----------------------:|
-|      id      |  integer   |  是   |  -  |           主鍵           |
-| conversation | ForeignKey |  是   |  -  | 關聯到 Conversation 模型的外鍵 |
-|     text     |    text    |  是   |  -  |         訊息內容文字         |
-|   is_user    |  boolean   |  是   |  -  |        是否為用戶訊息         |
-|  timestamp   |  datetime  |  否   |  -  |      訊息建立時間（自動生成）      |
+|      欄位名稱       |    資料型別    | 是否必填 | 預設值 |           說明           |
+|:---------------:|:----------:|:----:|:---:|:----------------------:|
+|       id        |  integer   |  是   |  -  |           主鍵           |
+| conversation_id | ForeignKey |  是   |  -  | 關聯到 Conversation 模型的外鍵 |
+|      text       |   string   |  是   |  -  |         訊息內容文字         |
+|     is_user     |  boolean   |  是   |  -  |        是否為用戶訊息         |
+|    timestamp    |  datetime  |  否   |  -  |      訊息建立時間（自動生成）      |
 
 ## 環境變數規格表
 

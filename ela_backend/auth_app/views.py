@@ -481,7 +481,7 @@ class DeleteAccount(APIView):
         return Response({
             "message": "帳號已成功刪除",
             "data": None
-        }, status=status.HTTP_204_NO_CONTENT, content_type='application/json; charset=utf-8')
+        }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
 
 
 # -----------------------------
