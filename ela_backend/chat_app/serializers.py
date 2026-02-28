@@ -19,7 +19,6 @@ class ConversationListSerializer(serializers.ModelSerializer):
         """取得用戶問題（is_user=True）的數量"""
         return obj.messages.filter(is_user=True).count()
 
-
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
@@ -27,6 +26,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
 
 class MessageDetailSerializer(serializers.ModelSerializer):
+    title = serializers.CharField()
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:

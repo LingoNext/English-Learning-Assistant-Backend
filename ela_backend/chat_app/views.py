@@ -48,8 +48,7 @@ class ConversationDetailView(APIView):
 
         try:
             conversation = Conversation.objects.get(id=conversation_id, user=request.user)
-            messages = Message.objects.filter(conversation=conversation).order_by('timestamp')
-            serializer = MessageDetailSerializer(messages, many=True)
+            serializer = MessageDetailSerializer(conversation)
             return Response({
                 "message": "對話訊息取得成功",
                 "data": serializer.data
