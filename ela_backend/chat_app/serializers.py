@@ -21,22 +21,14 @@ class ConversationListSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    title = serializers.SerializerMethodField()
-
     class Meta:
         model = Message
         fields = ["text", "is_user"]
 
 
-class MessageListSerializer(serializers.ModelSerializer):
-    """用於 POST /chat/conversation/ 端點的簡化序列化器"""
-    title = serializers.SerializerMethodField()
+class MessageDetailSerializer(serializers.ModelSerializer):
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:
-        model = Message
+        model = Conversation
         fields = ["title", "messages"]
-
-    def get_title(self, obj):
-        """取得對話標題"""
-        return obj.conversation.title

@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Conversation, Message
-from .serializers import ConversationListSerializer, MessageListSerializer
+from .serializers import ConversationListSerializer, MessageDetailSerializer
 
 
 class ConversationAllView(APIView):
@@ -49,7 +49,7 @@ class ConversationDetailView(APIView):
         try:
             conversation = Conversation.objects.get(id=conversation_id, user=request.user)
             messages = Message.objects.filter(conversation=conversation).order_by('timestamp')
-            serializer = MessageListSerializer(messages, many=True)
+            serializer = MessageDetailSerializer(messages, many=True)
             return Response({
                 "message": "對話訊息取得成功",
                 "data": serializer.data
