@@ -15,7 +15,7 @@
 |          `/auth/user/`          |   更新用戶資料   |  PUT   |               { new_name }               |                -                |   200,400, 401,403    | 需要驗證 |
 |   `/chat/conversations/all/`    |   取得對話列表   |  GET   |                    -                     | ConversationListSerializer.data |     200, 401,403      | 需要驗證 |
 |   `/chat/conversations/all/`    |   刪除全部對話   | DELETE |                    -                     |                -                |      200,401,403      | 需要驗證 |
-|      `/chat/conversation/`      |   取得特定對話   |  POST  |           { conversation_id }            |    Array<{ text, is_user }>     |   200,400, 401,403    | 需要驗證 |
+|      `/chat/conversation/`      |   取得特定對話   |  POST  |           { conversation_id }            |   MessageListSerializer.data    |   200,400, 401,403    | 需要驗證 |
 |     `/chat/conversations/`      |   建立新對話    |  POST  |         { text, is_user,title }          |       { conversation_id }       |   201,400, 401,403    | 需要驗證 |
 |     `/chat/conversations/`      |    刪除對話    | DELETE |           { conversation_id }            |                -                | 200,400, 401,403, 404 | 需要驗證 |
 |        `/chat/messages/`        |   建立新訊息    |  POST  | { conversation_id, text, is_user,title } |                -                | 201,400, 401,403, 404 | 需要驗證 |
@@ -25,21 +25,22 @@
 
 ### 表格2：簡化序列化器規格表
 
-|            序列化器名稱             |                              欄位名稱                              |        說明        |
-|:-----------------------------:|:--------------------------------------------------------------:|:----------------:|
-|  ConversationListSerializer   |           conversation_id, title, count, updated_at            |      返回對話列表      |
-|     MessageListSerializer     |                         text, is_user                          |  用於取得特定對話的訊息列表   |
-|      UserLoginSerializer      |                        email, password                         |    用戶登入時的資料驗證    |
-| RegistrationConfirmSerializer |               email, password, verification_code               |    註冊確認時的資料驗證    |
-|     UserDetailSerializer      |                     email, name, new_name                      |    用戶資料的取得和更新    |
-|    DeleteAccountSerializer    |                            password                            |   永久刪除帳號時的密碼驗證   |
-|   VocabularyItemSerializer    |                     word_en, word_zh, pos                      |    詞彙分析結果的詞彙     |
-|    SentenceItemSerializer     |                        english, chinese                        |    影像分析結果的例句     |
-|   VisualAnalysisSerializer    |        VocabularyItemSerializer, SentenceItemSerializer        |    影像分析結果的整合     |
-|    VocabResponseSerializer    | word,ipa,pos,meaning_en,meaning_zh,example_en,example_zh,error |   詞彙分析結果的詳細資訊    |
-|     UserGrammarSerializer     |          is_correct,corrected_text,errors,explanation          | 用於分析聊天對話中用戶語法的結果 |
-|  GrammarStructureSerializer   |                    type,description,example                    | 用於分析聊天對話中語法結構的結果 |
-|    ChatResponseSerializer     |           reply,title,user_grammar,grammar_structure           |  用於分析聊天對話的回應結果   |
+|            序列化器名稱             |                              欄位名稱                              |          說明           |
+|:-----------------------------:|:--------------------------------------------------------------:|:---------------------:|
+|  ConversationListSerializer   |           conversation_id, title, count, updated_at            |        返回對話列表         |
+|       MessageSerializer       |                         text, is_user                          |     用於取得特定對話的訊息列表     |
+|     MessageListSerializer     |                  title,MessageSerializer.data                  | 用於取得特定對話的訊息列表（包含對話標題） |
+|      UserLoginSerializer      |                        email, password                         |      用戶登入時的資料驗證       |
+| RegistrationConfirmSerializer |               email, password, verification_code               |      註冊確認時的資料驗證       |
+|     UserDetailSerializer      |                     email, name, new_name                      |      用戶資料的取得和更新       |
+|    DeleteAccountSerializer    |                            password                            |     永久刪除帳號時的密碼驗證      |
+|   VocabularyItemSerializer    |                     word_en, word_zh, pos                      |       詞彙分析結果的詞彙       |
+|    SentenceItemSerializer     |                        english, chinese                        |       影像分析結果的例句       |
+|   VisualAnalysisSerializer    |        VocabularyItemSerializer, SentenceItemSerializer        |       影像分析結果的整合       |
+|    VocabResponseSerializer    | word,ipa,pos,meaning_en,meaning_zh,example_en,example_zh,error |      詞彙分析結果的詳細資訊      |
+|     UserGrammarSerializer     |          is_correct,corrected_text,errors,explanation          |   用於分析聊天對話中用戶語法的結果    |
+|  GrammarStructureSerializer   |                    type,description,example                    |   用於分析聊天對話中語法結構的結果    |
+|    ChatResponseSerializer     |           reply,title,user_grammar,grammar_structure           |     用於分析聊天對話的回應結果     |
 
 
 
