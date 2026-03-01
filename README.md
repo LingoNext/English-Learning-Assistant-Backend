@@ -10,7 +10,7 @@
 |   `/auth/verification/send/`    |   發送驗證碼    |  POST  |            { email, purpose }            |                -                |      200,400,429      |  -   |
 |  `/auth/registration/confirm/`  |    註冊確認    |  POST  |  { email, password, verification_code }  |                -                |     201,400, 409      |  -   |
 | `/auth/password/reset/confirm/` |    密碼重設    |  POST  |  { email, password, verification_code }  |                -                |   200,400, 401,404    |  -   |
-|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |               { password }               |                -                |   204,400, 401,403    | 需要驗證 |
+|     `/auth/delete_account/`     |   永久刪除帳號   |  POST  |               { password }               |                -                |   200,400, 401,403    | 需要驗證 |
 |          `/auth/user/`          |   取得用戶資料   |  GET   |                    -                     |         { email, name }         |     200, 401,403      | 需要驗證 |
 |          `/auth/user/`          |   更新用戶資料   |  PUT   |               { new_name }               |                -                |   200,400, 401,403    | 需要驗證 |
 |   `/chat/conversations/all/`    |   取得對話列表   |  GET   |                    -                     | ConversationListSerializer.data |     200, 401,403      | 需要驗證 |
@@ -25,22 +25,22 @@
 
 ### 表格2：簡化序列化器規格表
 
-|            序列化器名稱             |                              欄位名稱                              |          說明           |
-|:-----------------------------:|:--------------------------------------------------------------:|:---------------------:|
-|  ConversationListSerializer   |           conversation_id, title, count, updated_at            |        返回對話列表         |
-|       MessageSerializer       |                         text, is_user                          |     用於取得特定對話的訊息列表     |
-|     MessageListSerializer     |                  title,MessageSerializer.data                  | 用於取得特定對話的訊息列表（包含對話標題） |
-|      UserLoginSerializer      |                        email, password                         |      用戶登入時的資料驗證       |
-| RegistrationConfirmSerializer |               email, password, verification_code               |      註冊確認時的資料驗證       |
-|     UserDetailSerializer      |                     email, name, new_name                      |      用戶資料的取得和更新       |
-|    DeleteAccountSerializer    |                            password                            |     永久刪除帳號時的密碼驗證      |
-|   VocabularyItemSerializer    |                     word_en, word_zh, pos                      |       詞彙分析結果的詞彙       |
-|    SentenceItemSerializer     |                        english, chinese                        |       影像分析結果的例句       |
-|   VisualAnalysisSerializer    |        VocabularyItemSerializer, SentenceItemSerializer        |       影像分析結果的整合       |
-|    VocabResponseSerializer    | word,ipa,pos,meaning_en,meaning_zh,example_en,example_zh,error |      詞彙分析結果的詳細資訊      |
-|     UserGrammarSerializer     |          is_correct,corrected_text,errors,explanation          |   用於分析聊天對話中用戶語法的結果    |
-|  GrammarStructureSerializer   |                    type,description,example                    |   用於分析聊天對話中語法結構的結果    |
-|    ChatResponseSerializer     |           reply,title,user_grammar,grammar_structure           |     用於分析聊天對話的回應結果     |
+|            序列化器名稱             |                                  欄位名稱                                  |        說明        |
+|:-----------------------------:|:----------------------------------------------------------------------:|:----------------:|
+|  ConversationListSerializer   |           Array<{conversation_id, title, count, updated_at}>           |      返回對話列表      |
+|       MessageSerializer       |                         Array<{text, is_user}>                         |  用於取得特定對話的訊息列表   |
+|     MessageListSerializer     |                      title,MessageSerializer.data                      |  用於取得特定對話的訊息列表   |
+|      UserLoginSerializer      |                            email, password                             |    用戶登入時的資料驗證    |
+| RegistrationConfirmSerializer |                   email, password, verification_code                   |    註冊確認時的資料驗證    |
+|     UserDetailSerializer      |                         email, name, new_name                          |    用戶資料的取得和更新    |
+|    DeleteAccountSerializer    |                                password                                |   永久刪除帳號時的密碼驗證   |
+|   VocabularyItemSerializer    |                     Array<{word_en, word_zh, pos}>                     |    詞彙分析結果的詞彙     |
+|    SentenceItemSerializer     |                       Array<{english, chinese}>                        |    影像分析結果的例句     |
+|   VisualAnalysisSerializer    |       VocabularyItemSerializer.data, SentenceItemSerializer.data       |    影像分析結果的整合     |
+|    VocabResponseSerializer    |     word,ipa,pos,meaning_en,meaning_zh,example_en,example_zh,error     |   詞彙分析結果的詳細資訊    |
+|     UserGrammarSerializer     |              is_correct,corrected_text,errors,explanation              | 用於分析聊天對話中用戶語法的結果 |
+|  GrammarStructureSerializer   |                        type,description,example                        | 用於分析聊天對話中語法結構的結果 |
+|    ChatResponseSerializer     | reply,title,UserGrammarSerializer.data,GrammarStructureSerializer.data |  用於分析聊天對話的回應結果   |
 
 
 
@@ -52,37 +52,37 @@
 
 #### 用戶身份驗證相關 User (AbstractUser 擴展)
 
-|     欄位名稱     |   資料型別   | 是否必填 |  預設值  |       說明       |
-|:------------:|:--------:|:----:|:-----:|:--------------:|
-|      id      | integer  |  是   |   -   |       主鍵       |
-|    email     |  string  |  是   |   -   |  用戶電子郵件地址（唯一）  |
-|   password   |  string  |  是   |   -   |      用戶密碼      |
-|  first_name  |  string  |  否   |   -   |     用戶顯示名稱     |
-|  is_active   | boolean  |  否   | True  |    用戶帳號是否啟用    |
-| date_joined  | datetime |  否   |   -   |  用戶註冊時間（自動生成）  |
-|  last_login  | datetime |  否   |   -   | 用戶最後登入時間（自動更新） |
-|   is_staff   | boolean  |  否   | False |   用戶是否為工作人員    |
-| is_superuser | boolean  |  否   | False |   用戶是否為超級用戶    |
+|     欄位名稱     |      資料型別      | 是否必填 |     預設值      |       說明       |
+|:------------:|:--------------:|:----:|:------------:|:--------------:|
+|      id      |    integer     |  是   |     自動產生     |       主鍵       |
+|    email     |   EmailField   |  是   |      -       |  用戶電子郵件地址（唯一）  |
+|   password   | CharField(128) |  是   |      -       |      用戶密碼      |
+|  first_name  | CharField(150) |  否   |      ""      |     用戶顯示名稱     |
+|  is_active   |  BooleanField  |  否   |     True     |    用戶帳號是否啟用    |
+| date_joined  | DataTimeField  |  否   | auto_now_add |  用戶註冊時間（自動生成）  |
+|  last_login  | DataTimeField  |  否   |      -       | 用戶最後登入時間（自動更新） |
+|   is_staff   |  BooleanField  |  否   |    False     |   用戶是否為工作人員    |
+| is_superuser |  BooleanField  |  否   |    False     |   用戶是否為超級用戶    |
 
 #### 對話管理相關 Conversation
 
-|    欄位名稱    |    資料型別    | 是否必填 | 預設值 |       說明       |
-|:----------:|:----------:|:----:|:---:|:--------------:|
-|     id     |  integer   |  是   |  -  |       主鍵       |
-|  user_id   | ForeignKey |  是   |  -  | 關聯到 User 模型的外鍵 |
-|   title    |   string   |  否   |  -  |      對話標題      |
-| created_at |  datetime  |  否   |  -  |  對話建立時間（自動生成）  |
-| updated_at |  datetime  |  否   |  -  | 對話最後更新時間（自動更新） |
+|    欄位名稱    |     資料型別      | 是否必填 |     預設值      |       說明       |
+|:----------:|:-------------:|:----:|:------------:|:--------------:|
+|     id     |    integer    |  是   |     自動產生     |       主鍵       |
+|  user_id   |  ForeignKey   |  是   |      -       | 關聯到 User 模型的外鍵 |
+|   title    | CharField(50) |  否   |      ""      |      對話標題      |
+| created_at | DataTimeField |  是   | auto_now_add |     對話建立時間     |
+| updated_at | DataTimeField |  是   |   auto_now   |    對話最後更新時間    |
 
 #### 聊天訊息相關 Message
 
-|      欄位名稱       |    資料型別    | 是否必填 | 預設值 |           說明           |
-|:---------------:|:----------:|:----:|:---:|:----------------------:|
-|       id        |  integer   |  是   |  -  |           主鍵           |
-| conversation_id | ForeignKey |  是   |  -  | 關聯到 Conversation 模型的外鍵 |
-|      text       |   string   |  是   |  -  |         訊息內容文字         |
-|     is_user     |  boolean   |  是   |  -  |        是否為用戶訊息         |
-|    timestamp    |  datetime  |  否   |  -  |      訊息建立時間（自動生成）      |
+|      欄位名稱       |      資料型別      | 是否必填 |     預設值      |           說明           |
+|:---------------:|:--------------:|:----:|:------------:|:----------------------:|
+|       id        |    integer     |  是   |     自動產生     |           主鍵           |
+| conversation_id |   ForeignKey   |  是   |      -       | 關聯到 Conversation 模型的外鍵 |
+|      text       | TextField(500) |  是   |      -       |         訊息內容文字         |
+|     is_user     |  BooleanField  |  是   |     True     |        是否為用戶訊息         |
+|    timestamp    | DataTimeField  |  是   | auto_now_add |         訊息建立時間         |
 
 ## 環境變數規格表
 
@@ -113,3 +113,4 @@
 13. **status 500**: 為伺服器錯誤，通常不會特別列在表格中，但在實作時仍需處理此類錯誤情況
 14. **PBKDF2-SHA256**:單向雜湊（one-way hash），不可逆，只能驗證和更改密碼，確保即使資料庫洩漏，攻擊者也無法還原原始密碼
 15. **is_active**: 可以用於實現帳號停用功能，當用戶違規或需要暫時禁止登入時，可以將此欄位設為 False，而不刪除用戶資料
+16. **auto_now_add 不同於 auto_now**: auto_now_add 只在物件第一次創建時設定時間，之後不會自動更新；auto_now 則在每次物件保存時都會更新時間

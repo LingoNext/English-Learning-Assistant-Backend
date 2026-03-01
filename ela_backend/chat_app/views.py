@@ -158,7 +158,6 @@ class MessageView(APIView):
             is_user=is_user
         )
 
-        # 更新對話的 updated_at 時間
         conversation.save()
 
         return Response({

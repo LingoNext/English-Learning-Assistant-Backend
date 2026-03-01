@@ -31,7 +31,7 @@ class Message(models.Model):
         related_name='messages'
     )
     # 訊息內容
-    text = models.TextField(help_text="訊息內容")
+    text = models.TextField(max_length=500,help_text="訊息內容")
     # 是否為用戶訊息
     is_user = models.BooleanField(default=True, help_text="是否為用戶訊息")
 
