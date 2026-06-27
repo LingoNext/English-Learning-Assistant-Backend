@@ -9,3 +9,4 @@ gunicorn==25.0.2
 requests>=2.32.4
 huggingface_hub>=0.24,<0.26
 Pillow>=10.0.0
+django-stubs>=5.0.0

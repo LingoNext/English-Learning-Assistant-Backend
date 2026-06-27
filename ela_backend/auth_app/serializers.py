@@ -16,8 +16,12 @@ class UserLoginSerializer(serializers.Serializer):
 class RegistrationConfirmSerializer(serializers.Serializer):
     """用於 POST /auth/registration/confirm/ 端點的簡化序列化器"""
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password = serializers.CharField(write_only=True)
     verification_code = serializers.CharField()
+
+    def validate_password(self, value):
+        validate_password(value)
+        return value
 
 
 # 用戶資料序列化器
@@ -36,9 +40,3 @@ class UserDetailSerializer(serializers.ModelSerializer):
             instance.first_name = validated_data.get('first_name', instance.first_name)
             instance.save()
         return instance
-
-
-# 刪除帳號序列化器
-class DeleteAccountSerializer(serializers.Serializer):
-    """用於 POST /auth/delete_account/ 端點的簡化序列化器"""
-    password = serializers.CharField(write_only=True)

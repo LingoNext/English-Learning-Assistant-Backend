@@ -1,44 +1,119 @@
-# core/exceptions.py
 from rest_framework.views import exception_handler
-from rest_framework.exceptions import NotAuthenticated, PermissionDenied
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError, AuthenticationFailed
+from rest_framework.exceptions import (
+    NotAuthenticated,
+    PermissionDenied,
+    ValidationError
+)
+from rest_framework_simplejwt.exceptions import (
+    InvalidToken,
+    TokenError,
+    AuthenticationFailed
+)
+from rest_framework.response import Response
+from rest_framework import status
+
 
 def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
-    # 先確認 response 再存取屬性
     if response is None:
-        return response
+        return Response(
+            {
+                "message": "server_error",
+                "errors": {
+                    "detail": str(exc)
+                },
+                "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content_type="application/json; charset=utf-8"
+        )
 
-    response.content_type = 'application/json; charset=utf-8'
+    if isinstance(exc, ValidationError):
+        return Response(
+            {
+                "message": "validation_error",
+                "errors": response.data,
+                "status_code": response.status_code
+            },
+            status=response.status_code,
+            content_type="application/json; charset=utf-8"
+        )
 
-    # 帳號被封鎖：優先用 exception code 判斷，若沒有 code 再退回文字比對
-    if isinstance(exc, AuthenticationFailed):
-        exc_code = getattr(exc, 'code', None)
-        exc_detail = getattr(exc, 'detail', None)
-        detail_str = str(exc_detail) if exc_detail is not None else ''
-
-        if exc_code == 'user_inactive' or '停用' in detail_str or 'inactive' in detail_str.lower():
-            response.data = {"message": "此帳號已被停用"}
-            response.status_code = 403
-            return response
-
-    # 未提供認證
     if isinstance(exc, NotAuthenticated):
-        response.data = {"message": "未提供認證"}
-        response.status_code = 401
-        return response
+        return Response(
+            {
+                "message": "not_authenticated",
+                "errors": {
+                    "detail": "未提供認證"
+                },
+                "status_code": 401
+            },
+            status=401,
+            content_type="application/json; charset=utf-8"
+        )
 
-    # 權限不足
     if isinstance(exc, PermissionDenied):
-        response.data = {"message": str(exc.detail)}
-        response.status_code = 403
-        return response
+        return Response(
+            {
+                "message": "permission_denied",
+                "errors": {
+                    "detail": str(exc.detail)
+                },
+                "status_code": 403
+            },
+            status=403,
+            content_type="application/json; charset=utf-8"
+        )
 
-    # Token 無效或過期
     if isinstance(exc, (InvalidToken, TokenError)):
-        response.data = {"message": "Token 無效或過期"}
-        response.status_code = 401
-        return response
+        return Response(
+            {
+                "message": "invalid_token",
+                "errors": {
+                    "detail": "Token 無效或過期"
+                },
+                "status_code": 401
+            },
+            status=401,
+            content_type="application/json; charset=utf-8"
+        )
 
-    return response
+    if isinstance(exc, AuthenticationFailed):
+        detail_str = str(getattr(exc, "detail", ""))
+
+        # account disabled special case
+        if "inactive" in detail_str.lower() or "停用" in detail_str:
+            return Response(
+                {
+                    "message": "account_disabled",
+                    "errors": {
+                        "detail": "此帳號已被停用"
+                    },
+                    "status_code": 403
+                },
+                status=403,
+                content_type="application/json; charset=utf-8"
+            )
+
+        return Response(
+            {
+                "message": "authentication_failed",
+                "errors": {
+                    "detail": detail_str
+                },
+                "status_code": 401
+            },
+            status=401,
+            content_type="application/json; charset=utf-8"
+        )
+
+    return Response(
+        {
+            "message": "error",
+            "errors": response.data,
+            "status_code": response.status_code
+        },
+        status=response.status_code,
+        content_type="application/json; charset=utf-8"
+    )

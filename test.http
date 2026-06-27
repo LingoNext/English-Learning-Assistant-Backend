@@ -13,7 +13,7 @@ Content-Type: application/json
 
 {
 "email": "chen@gmail.com",
-"password": "123456"
+"password": "RAIN123456"
 }
 
 ### =========================
@@ -53,7 +53,7 @@ Content-Type: application/json
 
 {
 "email": "chen@gmail.com",
-"purpose": "register"
+"purpose": "registration"
 }
 
 ### =========================
@@ -67,8 +67,8 @@ Content-Type: application/json
 
 {
 "email": "chen@gmail.com",
-"password": "123456",
-"verification_code": "123456"
+"password": "RAIN123456",
+"verification_code": "542407"
 }
 
 ### =========================
@@ -82,7 +82,7 @@ Content-Type: application/json
 
 {
 "email": "chen@gmail.com",
-"password": "newpassword",
+"password": "RAIN123456",
 "verification_code": "123456"
 }
 
@@ -97,7 +97,7 @@ Content-Type: application/json
 Authorization: Bearer YOUR_ACCESS_TOKEN
 
 {
-"password": "123456"
+"password": "RAIN123456"
 }
 
 ### =========================

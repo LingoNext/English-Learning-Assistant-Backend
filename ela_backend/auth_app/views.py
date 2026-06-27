@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from django.conf import settings
 from rest_framework import status
 from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth.models import BaseUserManager
 from django.core.cache import cache
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -10,11 +11,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.hashers import make_password
 from rest_framework.exceptions import ValidationError
 from django.utils import timezone
+from typing import Dict, Any, cast
 from .serializers import (
     UserLoginSerializer,
     RegistrationConfirmSerializer,
     UserDetailSerializer,
-    DeleteAccountSerializer
 )
 from django.conf import settings
 from .rate_limiter import (
@@ -72,7 +73,7 @@ class SendVerificationCode(APIView):
         cache.set(f"verification_code_{email_hash}", code, timeout=300)
 
         if settings.DEBUG:
-            print("僅用於本地測試 email:{email_normalized} code:{code}")
+            print(f"僅用於本地測試 email:{email_normalized} code:{code}")
             return Response({"message": "驗證碼已成功發送", "data": None}, status=status.HTTP_200_OK,
                             content_type='application/json; charset=utf-8')
         
@@ -231,20 +232,15 @@ class RegistrationConfirm(APIView):
     POST /auth/registration/confirm/ - 註冊確認
     """
     permission_classes = [AllowAny]
-
-    @general_rate_limit(max_requests=10, time_window=300, action_type='registration_confirm')  # 5分鐘內最多10次註冊嘗試
     def post(self, request):
         serializer = RegistrationConfirmSerializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            email = serializer.validated_data["email"]
-            code = serializer.validated_data["verification_code"]
-            password = serializer.validated_data["password"]
-        except ValidationError:
-            return Response({
-                "message": "缺少必要參數"
-            }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+        serializer.is_valid(raise_exception=True)
 
+        validated_data = cast(Dict[str, Any], serializer.validated_data)
+        email = validated_data["email"]
+        code = validated_data["verification_code"]
+        password = validated_data["password"]
+        
         email_normalized = email.strip().lower()  # 去空格、統一小寫
         email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
         cached_code = cache.get(f"verification_code_{email_hash}")
@@ -263,11 +259,11 @@ class RegistrationConfirm(APIView):
 
         # 建立用戶(預設從 email 提取 @ 前面的字串作為 name)
         name = email.split('@')[0]
-        user = User.objects.create_user(
+        user = User.objects.create_user(    # type: ignore
             email=email,
             first_name=name,
             password=password
-        )
+        )  
         user.save()
 
         # 刪除已使用的驗證碼
@@ -297,9 +293,10 @@ class LoginView(APIView):
             return Response({
                 "message": "缺少必要參數"
             }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
-
-        email = serializer.validated_data["email"]
-        password = serializer.validated_data["password"]
+        
+        validated_data = cast(Dict[str, Any], serializer.validated_data)
+        email = validated_data["email"]
+        password = validated_data["password"]
         # 嘗試取得使用者（不驗證密碼）
         try:
             user = User.objects.get(email=email)
@@ -469,10 +466,7 @@ class DeleteAccount(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = DeleteAccountSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        password = serializer.validated_data["password"]
+        password = request.data.get("password", "")
         if not password:
             return Response({
                 "message": "缺少必要參數",
