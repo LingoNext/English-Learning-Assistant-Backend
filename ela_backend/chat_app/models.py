@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 
 class Conversation(models.Model):
+    id = models.BigAutoField(primary_key=True)  # Django 自動產生
     # user_id 參考 Django 內建的 User 模型
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -24,6 +25,7 @@ class Conversation(models.Model):
 
 
 class Message(models.Model):
+    id = models.BigAutoField(primary_key=True)  # Django 自動產生
     # conversation_id 參考 Conversation 模型
     conversation = models.ForeignKey(
         Conversation,

@@ -21,7 +21,7 @@ class VisualAnalysisSerializer(serializers.Serializer):
 class UserGrammarSerializer(serializers.Serializer):
     is_correct = serializers.BooleanField()
     corrected_text = serializers.CharField(required=False, allow_blank=True)
-    errors = serializers.ListField(
+    grammar_errors = serializers.ListField(
         child=serializers.CharField(),
         required=False,
         allow_empty=True
