@@ -11,6 +11,7 @@ APPEND_SLASH = False
 ALLOWED_HOSTS = ['*']
 SECURE_SSL_REDIRECT = False
 
+# 在 ela_backend 下建立資料庫檔案 db.sqlite3
 # 這是測試開發環境的 Django 設定文件，使用 SQLite 作為數據庫，並且允許所有主機訪問
 # 創建數據庫和應用遷移：
 # cd ela_backend

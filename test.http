@@ -1,0 +1,124 @@
+### base settings
+
+@baseUrl = http://127.0.0.1:8000
+
+### =========================
+
+### AUTH - LOGIN
+
+### =========================
+
+POST {{baseUrl}}/auth/login/
+Content-Type: application/json
+
+{
+"email": "chen@gmail.com",
+"password": "123456"
+}
+
+### =========================
+
+### TOKEN - REFRESH
+
+### =========================
+
+POST {{baseUrl}}/auth/token/refresh/
+Content-Type: application/json
+
+{
+"refresh_token": "YOUR_REFRESH_TOKEN"
+}
+
+### =========================
+
+### TOKEN - VERIFY
+
+### =========================
+
+POST {{baseUrl}}/auth/token/verify/
+Content-Type: application/json
+
+{
+"access_token": "YOUR_ACCESS_TOKEN"
+}
+
+### =========================
+
+### AUTH - SEND VERIFICATION CODE
+
+### =========================
+
+POST {{baseUrl}}/auth/verification/send/
+Content-Type: application/json
+
+{
+"email": "chen@gmail.com",
+"purpose": "register"
+}
+
+### =========================
+
+### AUTH - REGISTER CONFIRM
+
+### =========================
+
+POST {{baseUrl}}/auth/registration/confirm/
+Content-Type: application/json
+
+{
+"email": "chen@gmail.com",
+"password": "123456",
+"verification_code": "123456"
+}
+
+### =========================
+
+### AUTH - PASSWORD RESET CONFIRM
+
+### =========================
+
+POST {{baseUrl}}/auth/password/reset/confirm/
+Content-Type: application/json
+
+{
+"email": "chen@gmail.com",
+"password": "newpassword",
+"verification_code": "123456"
+}
+
+### =========================
+
+### AUTH - DELETE ACCOUNT
+
+### =========================
+
+POST {{baseUrl}}/auth/delete_account/
+Content-Type: application/json
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+{
+"password": "123456"
+}
+
+### =========================
+
+### USER - GET PROFILE
+
+### =========================
+
+GET {{baseUrl}}/auth/user/
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+### =========================
+
+### USER - UPDATE PROFILE
+
+### =========================
+
+PUT {{baseUrl}}/auth/user/
+Content-Type: application/json
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+{
+"new_name": "tonixiang"
+}

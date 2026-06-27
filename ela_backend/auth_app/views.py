@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.conf import settings
 from rest_framework import status
 from django.contrib.auth import get_user_model, authenticate
 from django.core.cache import cache
@@ -69,6 +70,12 @@ class SendVerificationCode(APIView):
 
         # 將驗證碼存入快取，有效期五分鐘
         cache.set(f"verification_code_{email_hash}", code, timeout=300)
+
+        if settings.DEBUG:
+            print("僅用於本地測試 email:{email_normalized} code:{code}")
+            return Response({"message": "驗證碼已成功發送", "data": None}, status=status.HTTP_200_OK,
+                            content_type='application/json; charset=utf-8')
+        
 
         if purpose == 'registration':
             action = "註冊"
@@ -230,14 +237,13 @@ class RegistrationConfirm(APIView):
         serializer = RegistrationConfirmSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
+            email = serializer.validated_data["email"]
+            code = serializer.validated_data["verification_code"]
+            password = serializer.validated_data["password"]
         except ValidationError:
             return Response({
                 "message": "缺少必要參數"
             }, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
-
-        email = serializer.validated_data["email"]
-        code = serializer.validated_data["verification_code"]
-        password = serializer.validated_data["password"]
 
         email_normalized = email.strip().lower()  # 去空格、統一小寫
         email_hash = hashlib.sha256(email_normalized.encode()).hexdigest()
