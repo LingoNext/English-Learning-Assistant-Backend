@@ -4,6 +4,7 @@ __pycache__/
 
 # Virtual environment
 ela_backend/venv/
+.env
 
 # SQLite
 ela_backend/db.sqlite3

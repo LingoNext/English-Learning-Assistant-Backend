@@ -304,8 +304,8 @@ def get_novita_client() -> NovitaQwenClient:
 
 class ImageCompressor:
     """"限制圖片大小的工具，確保上傳的圖片不會超過指定的檔案大小和像素數"""
-
-    def compress_image_file(self,file_obj, target_width, max_bytes=2 * 1024 * 1024, max_pixels=2_000_000) -> bytes:
+    @staticmethod
+    def compress_image_file(file_obj, target_width=1024, max_bytes=2 * 1024 * 1024, max_pixels=2_000_000) -> bytes:
         file_obj.seek(0)
         img_bytes = file_obj.read()
 

@@ -25,7 +25,7 @@ class VisualView(APIView):
                             content_type='application/json; charset=utf-8')
         try:
             client = get_novita_client()
-            compose_image = ImageCompressor.compress_image_file(image, 1 * 1024 * 1024)
+            compose_image = ImageCompressor.compress_image_file(image)
             print(f"before compression: {image.size} bytes, after compression: {len(compose_image)} bytes")
             inference = client.analyze_image(compose_image)
         except Exception as e:

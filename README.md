@@ -85,7 +85,6 @@
 |    timestamp    | DataTimeField  |  是   | auto_now_add |         訊息建立時間         |
 
 ## 環境變數規格表
-
 - `SECRET_KEY`: Django 的密鑰，用於加密和安全相關功能
 - `DB_NAME`: 資料庫名稱
 - `DB_USER`: 資料庫使用者名稱
@@ -93,6 +92,7 @@
 - `DB_HOST`: 資料庫主機地址
 - `NOVITA_API_KEY`: 用於訪問 Novita API 的金鑰，提供詞彙分析和影像分析功能
 - `SEND_EMAIL_API_KEY`: 用於訪問郵件服務的金鑰，負責發送驗證碼和通知郵件
+> 以上用於正式環境，本地請參考 .env.example
 
 ## 備註
 
@@ -114,3 +114,4 @@
 14. **PBKDF2-SHA256**:單向雜湊（one-way hash），不可逆，只能驗證和更改密碼，確保即使資料庫洩漏，攻擊者也無法還原原始密碼
 15. **is_active**: 可以用於實現帳號停用功能，當用戶違規或需要暫時禁止登入時，可以將此欄位設為 False，而不刪除用戶資料
 16. **auto_now_add 不同於 auto_now**: auto_now_add 只在物件第一次創建時設定時間，之後不會自動更新；auto_now 則在每次物件保存時都會更新時間
+17. 本地環境使用 SQLite（db.sqlite3），正式部署環境改用 PostgreSQL
